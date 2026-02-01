@@ -26,17 +26,17 @@
     <!-- Why This Plan? -->
     <div class="card mb-3">
         <div class="card-header">
-            <h2 class="card-title">Why This Plan?</h2>
+            <h2 class="card-title">🧠 Why This Plan?</h2>
         </div>
         
         <div style="line-height: 1.8;">
-            <p style="margin-bottom: 0.5rem; color: var(--text-secondary);">
+            <p style="margin-bottom: 1rem; color: var(--text-secondary);">
                 Our intelligent algorithm considers multiple factors to create your optimal study schedule:
             </p>
             
-            <ul style="list-style: none; padding: 0;">
+            <ul style="list-style: none; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                 {% for explanation in explanations %}
-                    <li style="padding: 0.5rem 0; border-bottom: 1px solid var(--border-color);">
+                    <li style="padding: 0.75rem; background: var(--bg-hover); border-radius: var(--border-radius); border-left: 3px solid var(--primary-color);">
                         {{ explanation|safe }}
                     </li>
                 {% endfor %}
@@ -54,7 +54,8 @@
             <div class="empty-state">
                 <div class="empty-state-icon">📚</div>
                 <p class="empty-state-text">You need to add subjects first</p>
-                <a href="{{ url_for('subjects.list_subjects') }}" class="btn btn-primary">Add Subjects</a>
+                <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.95rem;">Before generating your study plan, please add at least one subject with topics. This helps the planner create a personalized schedule tailored to your exam dates and difficulty levels.</p>
+                <a href="{{ url_for('subjects.list_subjects') }}" class="btn btn-primary btn-lg">➕ Add Your Subjects</a>
             </div>
         {% else %}
             <form method="POST" action="{{ url_for('planner.generate_plan') }}">

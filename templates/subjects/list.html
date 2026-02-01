@@ -40,8 +40,22 @@
                 
                 <div class="form-group">
                     <label for="color" class="form-label">Color Tag</label>
-                    <input type="color" id="color" name="color" class="form-input" value="#3B82F6">
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <input type="color" id="color" name="color" class="form-input" value="#3B82F6" style="width: 80px; height: 40px; padding: 2px;">
+                        <div id="color-preview" style="width: 80px; height: 40px; border-radius: 8px; background-color: #3B82F6; border: 2px solid var(--border-color);"></div>
+                        <span id="color-text" style="font-family: monospace; color: var(--text-secondary); font-size: 0.9rem;">​#3B82F6</span>
+                    </div>
                 </div>
+                <script>
+                document.getElementById('color').addEventListener('change', function() {
+                    document.getElementById('color-preview').style.backgroundColor = this.value;
+                    document.getElementById('color-text').textContent = this.value.toUpperCase();
+                });
+                document.getElementById('color').addEventListener('input', function() {
+                    document.getElementById('color-preview').style.backgroundColor = this.value;
+                    document.getElementById('color-text').textContent = this.value.toUpperCase();
+                });
+                </script>
             </div>
             
             <button type="submit" class="btn btn-primary">Add Subject</button>
@@ -52,52 +66,45 @@
     {% if subjects %}
         <div class="grid grid-cols-2">
             {% for subject in subjects %}
-                <div class="card subject-card" style="border-left-color: {{ subject.color }};">
+                {% set urgent_class = 'urgent' if subject.days_left and subject.days_left <= 7 else '' %}
+                <div class="card subject-card" style="border-left: 5px solid {{ subject.color }}; position: relative;">
+                    <div style="position: absolute; top: 1rem; right: 1rem; display: flex; gap: 0.5rem;">
+                        <div style="width: 32px; height: 32px; background-color: {{ subject.color }}; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.85rem; font-weight: bold;">D{{ subject.difficulty }}</div>
+                    </div>
                     <div class="subject-header">
                         <div>
-                            <h3 class="subject-name" style="color: {{ subject.color }};">
+                            <h3 class="subject-name" style="color: {{ subject.color }}; margin-bottom: 0.5rem;">
                                 {{ subject.name }}
                             </h3>
-                            <div class="subject-meta">
-                                <span>📅 Exam: {{ subject.exam_date.strftime('%b %d, %Y') }}</span>
-                                <span>⏰ {{ subject.days_left }} days left</span>
-                                <span>📊 Difficulty: {{ subject.difficulty }}/5</span>
+                            <div class="subject-meta" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.9rem;">
+                                <span>📅 {{ subject.exam_date.strftime('%b %d') }}</span>
+                                <span style="{% if subject.days_left and subject.days_left <= 7 %}color: var(--error-color); font-weight: 600;{% endif %}">⏰ {{ subject.days_left }} days</span>
+                                <span>📊 {{ subject.stats.completed_topics }}/{{ subject.stats.total_topics }} topics</span>
+                                <span>⏱ {{ subject.stats.total_minutes }} min</span>
                             </div>
                         </div>
                     </div>
                     
-                    <div class="subject-stats">
-                        <div class="stat-item">
-                            <div class="stat-value">{{ subject.stats.completed_topics }}/{{ subject.stats.total_topics }}</div>
-                            <div class="stat-label">Topics Done</div>
+                    <div style="margin: 1rem 0;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                            <span style="font-size: 0.875rem; color: var(--text-secondary);">Syllabus Progress</span>
+                            <span style="font-weight: 600; color: {{ subject.color }};">{{ subject.stats.completion_percentage }}%</span>
                         </div>
-                        
-                        <div class="stat-item">
-                            <div class="stat-value">{{ subject.stats.completion_percentage }}%</div>
-                            <div class="stat-label">Complete</div>
+                        <div class="progress-bar-container" style="height: 8px;">
+                            <div class="progress-bar-fill" style="width: {{ subject.stats.completion_percentage }}%; background-color: {{ subject.color }};"></div>
                         </div>
                     </div>
                     
-                    <div style="margin-top: 1rem;">
-                        <div class="progress-bar-container">
-                            <div class="progress-bar-fill" style="width: {{ subject.stats.completion_percentage }}%;">
-                                {{ subject.stats.completion_percentage }}%
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="card-footer" style="display: flex; gap: 0.5rem; justify-content: space-between;">
-                        <a href="{{ url_for('subjects.manage_topics', subject_id=subject._id) }}" class="btn btn-primary btn-sm">
-                            Manage Topics
+                    <div style="display: flex; gap: 0.5rem; justify-content: space-between; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+                        <a href="{{ url_for('subjects.manage_topics', subject_id=subject._id) }}" class="btn btn-primary btn-sm" style="flex: 1; text-align: center;">
+                            📝 Manage Topics
                         </a>
                         
-                        <div style="display: flex; gap: 0.5rem;">
-                            <button onclick="editSubject('{{ subject._id }}', '{{ subject.name }}', '{{ subject.exam_date.strftime('%Y-%m-%d') }}', '{{ subject.difficulty }}', '{{ subject.color }}')" class="btn btn-secondary btn-sm">
-                                Edit
-                            </button>
-                            
-                            <form method="POST" action="{{ url_for('subjects.delete_subject', subject_id=subject._id) }}" style="display: inline;" onsubmit="return confirmDelete('Delete subject &quot;{{ subject.name }}&quot; and all its topics?');">
-                                <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                        <button onclick="editSubject('{{ subject._id }}', '{{ subject.name }}', '{{ subject.exam_date.strftime('%Y-%m-%d') }}', '{{ subject.difficulty }}', '{{ subject.color }}')" class="btn btn-secondary btn-sm" style="padding: 0.5rem 0.75rem;">
+                            ✎ Edit
+                        </button>
+                        
+                        <form method="POST" action="{{ url_for('subjects.delete_subject', subject_id=subject._id) }}" style="display: inline;" onsubmit="return confirmDelete('Delete &quot;{{ subject.name }}&quot; and all its topics? This cannot be undone.');"><button type="submit" class="btn btn-danger btn-sm" style="padding: 0.5rem 0.75rem;">🗑 Delete</button>
                             </form>
                         </div>
                     </div>

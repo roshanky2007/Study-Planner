@@ -469,7 +469,28 @@ body {
    ======================================== */
 
 .subject-card {
-    border-left: 4px solid var(--primary-color);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.subject-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary-color), var(--primary-light));
+}
+
+.subject-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+}
+
+.subject-card.urgent {
+    border-left-color: var(--error-color) !important;
 }
 
 .subject-header {
@@ -518,6 +539,7 @@ body {
     font-size: 0.85rem;
     color: var(--text-secondary);
     margin-top: var(--spacing-xs);
+}
 }
 
 /* ========================================
