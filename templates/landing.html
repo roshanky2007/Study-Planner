@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Smart Study Planner - Plan Your Success{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="hero">
+        <h1 class="hero-title">🎓 Smart Study Planner</h1>
+        <p class="hero-subtitle">
+            Intelligent exam preparation with AI-driven scheduling<br>
+            Plan your study sessions, track progress, and achieve exam success
+        </p>
+        
+        <div class="hero-actions">
+            <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg">Get Started</a>
+            <a href="{{ url_for('auth.login') }}" class="btn btn-secondary btn-lg">Login</a>
+        </div>
+    </div>
+    
+    <div class="grid grid-cols-3" style="margin-top: 4rem;">
+        <div class="card text-center">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">📚</div>
+            <h3 style="margin-bottom: 0.5rem;">Smart Planning</h3>
+            <p style="color: var(--text-secondary);">
+                AI algorithm prioritizes subjects by exam date, difficulty, and syllabus coverage
+            </p>
+        </div>
+        
+        <div class="card text-center">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">📅</div>
+            <h3 style="margin-bottom: 0.5rem;">Day-by-Day Timetable</h3>
+            <p style="color: var(--text-secondary);">
+                Clear time blocks showing exactly what to study and when
+            </p>
+        </div>
+        
+        <div class="card text-center">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">📊</div>
+            <h3 style="margin-bottom: 0.5rem;">Progress Tracking</h3>
+            <p style="color: var(--text-secondary);">
+                Monitor completion, streaks, and readiness scores for exam confidence
+            </p>
+        </div>
+    </div>
+    
+    <div class="card" style="margin-top: 4rem; padding: 3rem; text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none;">
+        <h2 style="font-size: 2rem; margin-bottom: 1rem;">Ready to ace your exams?</h2>
+        <p style="font-size: 1.1rem; margin-bottom: 2rem; opacity: 0.9;">
+            Join students who plan smarter, study better, and achieve more
+        </p>
+        <a href="{{ url_for('auth.register') }}" class="btn btn-lg" style="background: white; color: #667eea;">
+            Create Free Account
+        </a>
+    </div>
+</div>
+{% endblock %}

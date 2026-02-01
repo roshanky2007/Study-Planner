@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block title %}Timetable - Smart Study Planner{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1 class="page-title">📅 Weekly Timetable</h1>
+        <p class="page-subtitle">Week of {{ start_of_week.strftime('%b %d, %Y') }}</p>
+    </div>
+    
+    <!-- Week Navigation -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <a href="{{ url_for('planner.timetable', week=week_offset-1, view=view_mode) }}" class="btn btn-secondary">
+            ← Previous Week
+        </a>
+        
+        <div style="display: flex; gap: 0.5rem;">
+            <a href="{{ url_for('planner.timetable', week=week_offset, view='grid') }}" class="btn {% if view_mode == 'grid' %}btn-primary{% else %}btn-secondary{% endif %}">
+                Grid View
+            </a>
+            <a href="{{ url_for('planner.timetable', week=week_offset, view='list') }}" class="btn {% if view_mode == 'list' %}btn-primary{% else %}btn-secondary{% endif %}">
+                List View
+            </a>
+        </div>
+        
+        <a href="{{ url_for('planner.timetable', week=week_offset+1, view=view_mode) }}" class="btn btn-secondary">
+            Next Week →
+        </a>
+    </div>
+    
+    {% if view_mode == 'grid' %}
+        <!-- Grid View -->
+        <div class="timetable-grid">
+            <!-- Header Row -->
+            <div class="timetable-header">Time</div>
+            {% for day in week_data %}
+                <div class="timetable-day-header {% if day.is_today %}today{% endif %}">
+                    <div>{{ day.day_name }}</div>
+                    <div style="font-size: 0.875rem; font-weight: normal;">{{ day.date.strftime('%b %d') }}</div>
+                </div>
+            {% endfor %}
+            
+            <!-- Morning Block -->
+            <div class="timetable-block-label">Morning<br><small>6 AM - 12 PM</small></div>
+            {% for day in week_data %}
+                <div class="timetable-cell">
+                    {% for session in day.sessions_by_block['Morning'] %}
+                        <div class="timetable-session-chip" style="border-left-color: {{ session.subject.color if session.subject else '#3B82F6' }}; background: {{ session.subject.color if session.subject else '#3B82F6' }}20;">
+                            <div style="font-weight: 600; font-size: 0.85rem;">{{ session.subject.name if session.subject else 'Subject' }}</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">{{ session.planned_minutes }} min</div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+            
+            <!-- Afternoon Block -->
+            <div class="timetable-block-label">Afternoon<br><small>12 PM - 6 PM</small></div>
+            {% for day in week_data %}
+                <div class="timetable-cell">
+                    {% for session in day.sessions_by_block['Afternoon'] %}
+                        <div class="timetable-session-chip" style="border-left-color: {{ session.subject.color if session.subject else '#3B82F6' }}; background: {{ session.subject.color if session.subject else '#3B82F6' }}20;">
+                            <div style="font-weight: 600; font-size: 0.85rem;">{{ session.subject.name if session.subject else 'Subject' }}</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">{{ session.planned_minutes }} min</div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+            
+            <!-- Evening Block -->
+            <div class="timetable-block-label">Evening<br><small>6 PM - 12 AM</small></div>
+            {% for day in week_data %}
+                <div class="timetable-cell">
+                    {% for session in day.sessions_by_block['Evening'] %}
+                        <div class="timetable-session-chip" style="border-left-color: {{ session.subject.color if session.subject else '#3B82F6' }}; background: {{ session.subject.color if session.subject else '#3B82F6' }}20;">
+                            <div style="font-weight: 600; font-size: 0.85rem;">{{ session.subject.name if session.subject else 'Subject' }}</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">{{ session.planned_minutes }} min</div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <!-- List View -->
+        {% for day in week_data %}
+            <div class="card mb-2">
+                <div class="card-header" style="{% if day.is_today %}background-color: var(--primary-light); color: white;{% endif %}">
+                    <h3 class="card-title">
+                        {{ day.day_name }}, {{ day.date.strftime('%b %d, %Y') }}
+                        {% if day.is_today %}<span style="margin-left: 0.5rem;">📍 Today</span>{% endif %}
+                    </h3>
+                </div>
+                
+                {% set has_sessions = day.sessions_by_block['Morning'] or day.sessions_by_block['Afternoon'] or day.sessions_by_block['Evening'] %}
+                
+                {% if has_sessions %}
+                    {% for block in ['Morning', 'Afternoon', 'Evening'] %}
+                        {% if day.sessions_by_block[block] %}
+                            <h4 style="font-size: 1rem; font-weight: 600; margin: 1rem 1rem 0.5rem; color: var(--text-primary);">
+                                {{ block }}
+                            </h4>
+                            
+                            {% for session in day.sessions_by_block[block] %}
+                                <div class="session-card session-status-{{ session.status }}" style="margin: 0 1rem 0.5rem; border-left-color: {{ session.subject.color if session.subject else '#3B82F6' }};">
+                                    <div class="session-header">
+                                        <div>
+                                            <div class="session-subject" style="color: {{ session.subject.color if session.subject else '#3B82F6' }};">
+                                                {{ session.subject.name if session.subject else 'Unknown Subject' }}
+                                            </div>
+                                            <div class="session-topic">
+                                                {{ session.topic.title if session.topic else 'Unknown Topic' }}
+                                            </div>
+                                        </div>
+                                        
+                                        {% if session.status == 'completed' %}
+                                            <span class="badge badge-success">✓ Done</span>
+                                        {% elif session.status == 'skipped' %}
+                                            <span class="badge badge-warning">⏭ Skipped</span>
+                                        {% else %}
+                                            <span class="badge badge-info">⏳ Pending</span>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="session-meta">
+                                        <span>⏱ {{ session.planned_minutes }} minutes</span>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                    <div style="padding: 2rem; text-align: center; color: var(--text-muted);">
+                        No sessions scheduled for this day
+                    </div>
+                {% endif %}
+            </div>
+        {% endfor %}
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block title %}Progress - Smart Study Planner{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1 class="page-title">📊 Your Progress</h1>
+        <p class="page-subtitle">Track your study performance and readiness</p>
+    </div>
+    
+    <!-- Readiness Score -->
+    <div class="card mb-3" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none;">
+        <div style="text-align: center;">
+            <h2 style="font-size: 1.25rem; margin-bottom: 1rem; opacity: 0.9;">Exam Readiness Score</h2>
+            
+            <div style="font-size: 4rem; font-weight: 800; margin-bottom: 0.5rem;">
+                {{ readiness.readiness_score }}%
+            </div>
+            
+            <div style="font-size: 1.5rem; font-weight: 600; margin-bottom: 2rem;">
+                {{ readiness_status }}
+            </div>
+            
+            <button onclick="showReadinessExplanation()" class="btn btn-lg" style="background: white; color: #667eea;">
+                How is this calculated? 🤔
+            </button>
+        </div>
+    </div>
+    
+    <!-- Breakdown -->
+    <div class="grid grid-cols-2 mb-3">
+        <div class="card">
+            <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem; color: var(--text-primary);">
+                Readiness Breakdown
+            </h3>
+            
+            <div style="margin-bottom: 1rem;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                    <span>Syllabus Completion (60% weight)</span>
+                    <span style="font-weight: 600;">{{ readiness.syllabus_completion }}%</span>
+                </div>
+                <div class="progress-bar-container" style="height: 8px;">
+                    <div class="progress-bar-fill" style="width: {{ readiness.syllabus_completion }}%;"></div>
+                </div>
+            </div>
+            
+            <div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                    <span>Consistency Score (40% weight)</span>
+                    <span style="font-weight: 600;">{{ readiness.consistency_score }}%</span>
+                </div>
+                <div class="progress-bar-container" style="height: 8px;">
+                    <div class="progress-bar-fill" style="width: {{ readiness.consistency_score }}%;"></div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+                <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6;">
+                    <strong>Formula:</strong> Readiness = (0.6 × Syllabus %) + (0.4 × Consistency %)
+                    <br><br>
+                    Your readiness score balances knowledge coverage (60%) with study consistency (40%). 
+                    A score of 80%+ indicates you're ready for your exams.
+                </p>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem; color: var(--text-primary);">
+                Overall Statistics
+            </h3>
+            
+            <div class="subject-stats">
+                <div class="stat-item">
+                    <div class="stat-value">{{ overall.total_subjects }}</div>
+                    <div class="stat-label">Subjects</div>
+                </div>
+                
+                <div class="stat-item">
+                    <div class="stat-value">{{ overall.total_topics }}</div>
+                    <div class="stat-label">Total Topics</div>
+                </div>
+                
+                <div class="stat-item">
+                    <div class="stat-value">{{ overall.completed_topics }}</div>
+                    <div class="stat-label">Completed</div>
+                </div>
+                
+                <div class="stat-item">
+                    <div class="stat-value" style="color: {% if streak >= 7 %}var(--success-color){% elif streak >= 3 %}var(--warning-color){% else %}var(--error-color){% endif %};">
+                        {{ streak }} 🔥
+                    </div>
+                    <div class="stat-label">Day Streak</div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 1.5rem;">
+                <h4 style="font-size: 0.95rem; font-weight: 600; margin-bottom: 0.5rem;">Study Time</h4>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                    <span>{{ overall.completed_minutes }} / {{ overall.total_minutes }} minutes</span>
+                    <span style="font-weight: 600;">{{ overall.completion_percentage }}%</span>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar-fill" style="width: {{ overall.completion_percentage }}%;">
+                        {{ overall.completion_percentage }}%
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Per-Subject Progress -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">Progress by Subject</h2>
+        </div>
+        
+        {% if subject_progress %}
+            {% for item in subject_progress %}
+                <div style="padding: 1rem; border-bottom: 1px solid var(--border-color);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <h3 style="font-size: 1.1rem; font-weight: 600; color: {{ item.subject.color }};">
+                            {{ item.subject.name }}
+                        </h3>
+                        
+                        <div style="text-align: right;">
+                            <div style="font-size: 0.875rem; color: var(--text-secondary);">
+                                {{ item.stats.completed_topics }}/{{ item.stats.total_topics }} topics
+                            </div>
+                            <div style="font-size: 0.875rem; color: var(--text-secondary);">
+                                {{ item.stats.completed_minutes }}/{{ item.stats.total_minutes }} min
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill {% if item.stats.completion_percentage >= 80 %}success{% elif item.stats.completion_percentage >= 50 %}{% else %}warning{% endif %}" style="width: {{ item.stats.completion_percentage }}%;">
+                            {{ item.stats.completion_percentage }}%
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 0.5rem; font-size: 0.875rem; color: var(--text-muted);">
+                        Exam: {{ item.subject.exam_date.strftime('%b %d, %Y') }} 
+                        ({{ item.subject.days_left }} days left)
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-state-icon">📚</div>
+                <p class="empty-state-text">No subjects to track yet</p>
+                <a href="{{ url_for('subjects.list_subjects') }}" class="btn btn-primary">Add Subjects</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

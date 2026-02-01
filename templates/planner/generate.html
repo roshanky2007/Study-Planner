@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}Planner - Smart Study Planner{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 900px;">
+    <div class="page-header">
+        <h1 class="page-title">🎯 Study Planner</h1>
+        <p class="page-subtitle">Generate your intelligent study plan</p>
+    </div>
+    
+    {% if latest_plan %}
+        <div class="card mb-3" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none;">
+            <h3 style="font-size: 1.25rem; margin-bottom: 0.5rem;">Current Plan Active</h3>
+            <p style="opacity: 0.9;">
+                Created on {{ latest_plan.created_at.strftime('%b %d, %Y') }} •
+                {{ latest_plan.daily_study_minutes }} min/day •
+                From {{ latest_plan.start_date.strftime('%b %d') }} to {{ latest_plan.end_date.strftime('%b %d, %Y') }}
+            </p>
+            <a href="{{ url_for('planner.timetable') }}" class="btn btn-lg" style="background: white; color: #667eea; margin-top: 1rem;">
+                View Timetable →
+            </a>
+        </div>
+    {% endif %}
+    
+    <!-- Why This Plan? -->
+    <div class="card mb-3">
+        <div class="card-header">
+            <h2 class="card-title">Why This Plan?</h2>
+        </div>
+        
+        <div style="line-height: 1.8;">
+            <p style="margin-bottom: 0.5rem; color: var(--text-secondary);">
+                Our intelligent algorithm considers multiple factors to create your optimal study schedule:
+            </p>
+            
+            <ul style="list-style: none; padding: 0;">
+                {% for explanation in explanations %}
+                    <li style="padding: 0.5rem 0; border-bottom: 1px solid var(--border-color);">
+                        {{ explanation|safe }}
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    
+    <!-- Generate New Plan -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">Generate New Plan</h2>
+        </div>
+        
+        {% if not subjects %}
+            <div class="empty-state">
+                <div class="empty-state-icon">📚</div>
+                <p class="empty-state-text">You need to add subjects first</p>
+                <a href="{{ url_for('subjects.list_subjects') }}" class="btn btn-primary">Add Subjects</a>
+            </div>
+        {% else %}
+            <form method="POST" action="{{ url_for('planner.generate_plan') }}">
+                <div class="form-group">
+                    <label for="daily_study_minutes" class="form-label form-label-required">Daily Study Time (minutes)</label>
+                    <input type="number" id="daily_study_minutes" name="daily_study_minutes" class="form-input" value="240" min="30" max="720" required>
+                    <span class="form-help">How many minutes per day can you dedicate to studying?</span>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="start_date" class="form-label form-label-required">Start Date</label>
+                        <input type="date" id="start_date" name="start_date" class="form-input" value="{{ now.strftime('%Y-%m-%d') }}" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="end_date" class="form-label form-label-required">End Date</label>
+                        <input type="date" id="end_date" name="end_date" class="form-input" value="{{ default_end_date.strftime('%Y-%m-%d') }}" required>
+                        <span class="form-help">Usually your last exam date</span>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="max_sessions_per_day" class="form-label form-label-required">Max Sessions Per Day</label>
+                        <select id="max_sessions_per_day" name="max_sessions_per_day" class="form-select" required>
+                            <option value="2">2 sessions</option>
+                            <option value="3">3 sessions</option>
+                            <option value="4" selected>4 sessions</option>
+                            <option value="5">5 sessions</option>
+                            <option value="6">6 sessions</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="revision_buffer_days" class="form-label form-label-required">Revision Buffer Days</label>
+                        <select id="revision_buffer_days" name="revision_buffer_days" class="form-select" required>
+                            <option value="0">No revision buffer</option>
+                            <option value="1">1 day before exam</option>
+                            <option value="2" selected>2 days before exam</option>
+                            <option value="3">3 days before exam</option>
+                            <option value="5">5 days before exam</option>
+                            <option value="7">7 days before exam</option>
+                        </select>
+                        <span class="form-help">Reserve days before exams for revision</span>
+                    </div>
+                </div>
+                
+                <div style="background: var(--bg-hover); padding: 1rem; border-radius: var(--border-radius); margin-bottom: 1rem;">
+                    <h4 style="margin-bottom: 0.5rem;">Time Blocks</h4>
+                    <p style="color: var(--text-secondary); margin-bottom: 0.5rem;">Your study sessions will be distributed across:</p>
+                    <ul style="color: var(--text-secondary);">
+                        <li><strong>Morning</strong>: 6:00 AM - 12:00 PM</li>
+                        <li><strong>Afternoon</strong>: 12:00 PM - 6:00 PM</li>
+                        <li><strong>Evening</strong>: 6:00 PM - 12:00 AM</li>
+                    </ul>
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-lg" style="width: 100%;">
+                    🚀 Generate My Study Plan
+                </button>
+            </form>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

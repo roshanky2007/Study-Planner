@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}Register - Smart Study Planner{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 500px;">
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title text-center">Create Your Account</h2>
+        </div>
+        
+        <form method="POST" action="{{ url_for('auth.register') }}">
+            <div class="form-group">
+                <label for="name" class="form-label form-label-required">Full Name</label>
+                <input 
+                    type="text" 
+                    id="name" 
+                    name="name" 
+                    class="form-input" 
+                    value="{{ name or '' }}"
+                    required
+                    placeholder="Enter your full name"
+                >
+                {% if errors and errors.name %}
+                    <span class="form-error">{{ errors.name }}</span>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="email" class="form-label form-label-required">Email Address</label>
+                <input 
+                    type="email" 
+                    id="email" 
+                    name="email" 
+                    class="form-input" 
+                    value="{{ email or '' }}"
+                    required
+                    placeholder="your.email@example.com"
+                >
+                {% if errors and errors.email %}
+                    <span class="form-error">{{ errors.email }}</span>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="password" class="form-label form-label-required">Password</label>
+                <input 
+                    type="password" 
+                    id="password" 
+                    name="password" 
+                    class="form-input" 
+                    required
+                    placeholder="At least 6 characters"
+                >
+                <span class="form-help">Password must be at least 6 characters long</span>
+                {% if errors and errors.password %}
+                    <span class="form-error">{{ errors.password }}</span>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="confirm_password" class="form-label form-label-required">Confirm Password</label>
+                <input 
+                    type="password" 
+                    id="confirm_password" 
+                    name="confirm_password" 
+                    class="form-input" 
+                    required
+                    placeholder="Re-enter your password"
+                >
+                {% if errors and errors.confirm_password %}
+                    <span class="form-error">{{ errors.confirm_password }}</span>
+                {% endif %}
+            </div>
+            
+            <button type="submit" class="btn btn-primary" style="width: 100%;">
+                Create Account
+            </button>
+        </form>
+        
+        <div style="text-align: center; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color);">
+            <p style="color: var(--text-secondary);">
+                Already have an account? 
+                <a href="{{ url_for('auth.login') }}" style="color: var(--primary-color); font-weight: 500;">Login here</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

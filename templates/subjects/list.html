@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+
+{% block title %}Subjects - Smart Study Planner{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1 class="page-title">📚 My Subjects</h1>
+        <p class="page-subtitle">Manage your subjects and exam dates</p>
+    </div>
+    
+    <!-- Add Subject Form -->
+    <div class="card mb-3">
+        <div class="card-header">
+            <h2 class="card-title">Add New Subject</h2>
+        </div>
+        
+        <form method="POST" action="{{ url_for('subjects.add_subject') }}">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="name" class="form-label form-label-required">Subject Name</label>
+                    <input type="text" id="name" name="name" class="form-input" required placeholder="e.g., Physics">
+                </div>
+                
+                <div class="form-group">
+                    <label for="exam_date" class="form-label form-label-required">Exam Date</label>
+                    <input type="date" id="exam_date" name="exam_date" class="form-input" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="difficulty" class="form-label form-label-required">Difficulty (1-5)</label>
+                    <select id="difficulty" name="difficulty" class="form-select" required>
+                        <option value="1">1 - Very Easy</option>
+                        <option value="2">2 - Easy</option>
+                        <option value="3" selected>3 - Medium</option>
+                        <option value="4">4 - Hard</option>
+                        <option value="5">5 - Very Hard</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="color" class="form-label">Color Tag</label>
+                    <input type="color" id="color" name="color" class="form-input" value="#3B82F6">
+                </div>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">Add Subject</button>
+        </form>
+    </div>
+    
+    <!-- Subjects List -->
+    {% if subjects %}
+        <div class="grid grid-cols-2">
+            {% for subject in subjects %}
+                <div class="card subject-card" style="border-left-color: {{ subject.color }};">
+                    <div class="subject-header">
+                        <div>
+                            <h3 class="subject-name" style="color: {{ subject.color }};">
+                                {{ subject.name }}
+                            </h3>
+                            <div class="subject-meta">
+                                <span>📅 Exam: {{ subject.exam_date.strftime('%b %d, %Y') }}</span>
+                                <span>⏰ {{ subject.days_left }} days left</span>
+                                <span>📊 Difficulty: {{ subject.difficulty }}/5</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="subject-stats">
+                        <div class="stat-item">
+                            <div class="stat-value">{{ subject.stats.completed_topics }}/{{ subject.stats.total_topics }}</div>
+                            <div class="stat-label">Topics Done</div>
+                        </div>
+                        
+                        <div class="stat-item">
+                            <div class="stat-value">{{ subject.stats.completion_percentage }}%</div>
+                            <div class="stat-label">Complete</div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 1rem;">
+                        <div class="progress-bar-container">
+                            <div class="progress-bar-fill" style="width: {{ subject.stats.completion_percentage }}%;">
+                                {{ subject.stats.completion_percentage }}%
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card-footer" style="display: flex; gap: 0.5rem; justify-content: space-between;">
+                        <a href="{{ url_for('subjects.manage_topics', subject_id=subject._id) }}" class="btn btn-primary btn-sm">
+                            Manage Topics
+                        </a>
+                        
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button onclick="editSubject('{{ subject._id }}', '{{ subject.name }}', '{{ subject.exam_date.strftime('%Y-%m-%d') }}', '{{ subject.difficulty }}', '{{ subject.color }}')" class="btn btn-secondary btn-sm">
+                                Edit
+                            </button>
+                            
+                            <form method="POST" action="{{ url_for('subjects.delete_subject', subject_id=subject._id) }}" style="display: inline;" onsubmit="return confirmDelete('Delete subject &quot;{{ subject.name }}&quot; and all its topics?');">
+                                <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="card">
+            <div class="empty-state">
+                <div class="empty-state-icon">📚</div>
+                <p class="empty-state-text">No subjects added yet</p>
+                <p style="color: var(--text-muted);">Add your first subject using the form above</p>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Edit Subject Form (Hidden) -->
+<div id="edit_subject_form" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 2rem; border-radius: 8px; box-shadow: var(--shadow-lg); z-index: 1000; min-width: 400px;">
+    <h3 style="margin-bottom: 1rem;">Edit Subject</h3>
+    <form method="POST" action="" id="edit_form_element">
+        <input type="hidden" id="edit_subject_id" name="subject_id">
+        
+        <div class="form-group">
+            <label for="edit_subject_name" class="form-label">Subject Name</label>
+            <input type="text" id="edit_subject_name" name="name" class="form-input" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="edit_exam_date" class="form-label">Exam Date</label>
+            <input type="date" id="edit_exam_date" name="exam_date" class="form-input" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="edit_difficulty" class="form-label">Difficulty</label>
+            <select id="edit_difficulty" name="difficulty" class="form-select" required>
+                <option value="1">1 - Very Easy</option>
+                <option value="2">2 - Easy</option>
+                <option value="3">3 - Medium</option>
+                <option value="4">4 - Hard</option>
+                <option value="5">5 - Very Hard</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="edit_color" class="form-label">Color Tag</label>
+            <input type="color" id="edit_color" name="color" class="form-input">
+        </div>
+        
+        <div style="display: flex; gap: 0.5rem;">
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+            <button type="button" class="btn btn-secondary" onclick="document.getElementById('edit_subject_form').style.display='none'">Cancel</button>
+        </div>
+    </form>
+</div>
+
+<script>
+function editSubject(id, name, examDate, difficulty, color) {
+    document.getElementById('edit_subject_id').value = id;
+    document.getElementById('edit_subject_name').value = name;
+    document.getElementById('edit_exam_date').value = examDate;
+    document.getElementById('edit_difficulty').value = difficulty;
+    document.getElementById('edit_color').value = color;
+    document.getElementById('edit_subject_form').style.display = 'block';
+    document.getElementById('edit_form_element').action = `/subjects/${id}/edit`;
+}
+</script>
+{% endblock %}

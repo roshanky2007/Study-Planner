@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}Topics - {{ subject.name }} - Smart Study Planner{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1 class="page-title" style="color: {{ subject.color }};">{{ subject.name }} - Topics</h1>
+        <p class="page-subtitle">
+            <a href="{{ url_for('subjects.list_subjects') }}" style="color: var(--primary-color);">← Back to Subjects</a>
+        </p>
+    </div>
+    
+    <!-- Statistics -->
+    <div class="grid grid-cols-4 mb-3">
+        <div class="card">
+            <div class="stat-item">
+                <div class="stat-value">{{ stats.total_topics }}</div>
+                <div class="stat-label">Total Topics</div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="stat-item">
+                <div class="stat-value">{{ stats.completed_topics }}</div>
+                <div class="stat-label">Completed</div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="stat-item">
+                <div class="stat-value">{{ stats.total_minutes }} min</div>
+                <div class="stat-label">Total Time</div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="stat-item">
+                <div class="stat-value">{{ stats.completion_percentage }}%</div>
+                <div class="stat-label">Progress</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Add Topic Form -->
+    <div class="card mb-3">
+        <div class="card-header">
+            <h2 class="card-title">Add New Topic</h2>
+        </div>
+        
+        <form method="POST" action="{{ url_for('subjects.add_topic', subject_id=subject._id) }}">
+            <div class="form-row">
+                <div class="form-group" style="flex: 2;">
+                    <label for="title" class="form-label form-label-required">Topic Title</label>
+                    <input type="text" id="title" name="title" class="form-input" required placeholder="e.g., Ray Optics">
+                </div>
+                
+                <div class="form-group">
+                    <label for="estimated_minutes" class="form-label form-label-required">Estimated Minutes</label>
+                    <input type="number" id="estimated_minutes" name="estimated_minutes" class="form-input" value="60" min="1" required>
+                </div>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">Add Topic</button>
+        </form>
+    </div>
+    
+    <!-- Topics List -->
+    {% if topics %}
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Topics Checklist</h2>
+            </div>
+            
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="border-bottom: 2px solid var(--border-color); text-align: left;">
+                        <th style="padding: 1rem; width: 50px;">Status</th>
+                        <th style="padding: 1rem;">Topic Title</th>
+                        <th style="padding: 1rem; width: 150px;">Est. Time</th>
+                        <th style="padding: 1rem; width: 150px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for topic in topics %}
+                        <tr style="border-bottom: 1px solid var(--border-color);">
+                            <td style="padding: 1rem; text-align: center;">
+                                <form method="POST" action="{{ url_for('subjects.toggle_topic', topic_id=topic._id) }}" style="display: inline;">
+                                    <button type="submit" style="background: none; border: none; cursor: pointer; font-size: 1.5rem;">
+                                        {% if topic.status == 'completed' %}
+                                            <span style="color: var(--success-color);">✓</span>
+                                        {% else %}
+                                            <span style="color: var(--text-muted);">○</span>
+                                        {% endif %}
+                                    </button>
+                                </form>
+                            </td>
+                            
+                            <td style="padding: 1rem; {% if topic.status == 'completed' %}text-decoration: line-through; color: var(--text-muted);{% endif %}">
+                                {{ topic.title }}
+                            </td>
+                            
+                            <td style="padding: 1rem;">
+                                {{ topic.estimated_minutes }} minutes
+                            </td>
+                            
+                            <td style="padding: 1rem;">
+                                <form method="POST" action="{{ url_for('subjects.delete_topic', topic_id=topic._id) }}" style="display: inline;" onsubmit="return confirmDelete('Delete topic &quot;{{ topic.title }}&quot;?');">
+                                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="card">
+            <div class="empty-state">
+                <div class="empty-state-icon">📝</div>
+                <p class="empty-state-text">No topics added yet</p>
+                <p style="color: var(--text-muted);">Break down {{ subject.name }} into topics to start planning</p>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
