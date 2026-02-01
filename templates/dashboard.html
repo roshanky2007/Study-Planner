@@ -56,10 +56,11 @@
                             </h3>
                             
                             {% for session in sessions_by_block[block] %}
-                                <div class="session-card session-status-{{ session.status }}" style="border-left-color: {{ session.subject.color if session.subject else '#3B82F6' }};">
+                                {% set subject_color = session.subject.color if session.subject else '#3B82F6' %}
+                                <div class="session-card session-status-{{ session.status }}" style="border-left-color: {{ subject_color }};">
                                     <div class="session-header">
                                         <div>
-                                            <div class="session-subject" style="color: {{ session.subject.color if session.subject else '#3B82F6' }};">
+                                            <div class="session-subject" style="color: {{ subject_color }};">
                                                 {{ session.subject.name if session.subject else 'Unknown Subject' }}
                                             </div>
                                             <div class="session-topic">
@@ -96,7 +97,8 @@
                                                 <button type="submit" class="btn btn-secondary btn-sm">⏭ Skip</button>
                                             </form>
                                             
-                                            <button onclick="rescheduleSession('{{ session._id }}', '{{ today.strftime('%Y-%m-%d') }}')" class="btn btn-secondary btn-sm">
+                                            {% set date_str = today.strftime('%Y-%m-%d') %}
+                                            <button onclick="rescheduleSession('{{ session._id }}', '{{ date_str }}')" class="btn btn-secondary btn-sm">
                                                 ↻ Reschedule
                                             </button>
                                         </div>
@@ -122,7 +124,8 @@
                     </div>
                     
                     {% for session in backlog[:5] %}
-                        <div class="session-card session-status-skipped" style="border-left-color: {{ session.subject.color if session.subject else '#F59E0B' }};">
+                        {% set backlog_color = session.subject.color if session.subject else '#F59E0B' %}
+                        <div class="session-card session-status-skipped" style="border-left-color: {{ backlog_color }};">
                             <div class="session-header">
                                 <div>
                                     <div class="session-subject">
@@ -140,7 +143,8 @@
                             </div>
                             
                             <div class="session-actions">
-                                <button onclick="rescheduleSession('{{ session._id }}', '{{ today.strftime('%Y-%m-%d') }}')" class="btn btn-primary btn-sm">
+                                {% set date_str = today.strftime('%Y-%m-%d') %}
+                                <button onclick="rescheduleSession('{{ session._id }}', '{{ date_str }}')" class="btn btn-primary btn-sm">
                                     ↻ Reschedule
                                 </button>
                             </div>
@@ -165,13 +169,15 @@
                 </div>
                 
                 {% for day in week_sessions %}
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; border-bottom: 1px solid var(--border-color); {% if day.is_today %}background-color: var(--bg-hover);{% endif %}">
+                    {% set day_bg_color = 'var(--bg-hover)' if day.is_today else 'transparent' %}
+                    {% set day_text_color = 'var(--success-color)' if (day.completed == day.total and day.total > 0) else 'var(--text-primary)' %}
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; border-bottom: 1px solid var(--border-color); background-color: {{ day_bg_color }};">
                         <div>
                             <div style="font-weight: 600;">{{ day.day_name }}</div>
                             <div style="font-size: 0.875rem; color: var(--text-muted);">{{ day.date.strftime('%b %d') }}</div>
                         </div>
                         <div style="text-align: right;">
-                            <div style="font-weight: 600; color: {% if day.completed == day.total and day.total > 0 %}var(--success-color){% else %}var(--text-primary){% endif %};">
+                            <div style="font-weight: 600; color: {{ day_text_color }};">
                                 {{ day.completed }}/{{ day.total }}
                             </div>
                             <div style="font-size: 0.875rem; color: var(--text-muted);">sessions</div>
@@ -188,6 +194,7 @@
                 
                 {% if upcoming_exams %}
                     {% for exam in upcoming_exams %}
+                        {% set exam_urgency_color = 'var(--error-color)' if exam.days_left <= 7 else ('var(--warning-color)' if exam.days_left <= 14 else 'var(--success-color)') %}
                         <div style="padding: 0.75rem; border-bottom: 1px solid var(--border-color);">
                             <div style="font-weight: 600; color: {{ exam.color }};">
                                 {{ exam.name }}
@@ -195,7 +202,7 @@
                             <div style="font-size: 0.875rem; color: var(--text-secondary); margin-top: 0.25rem;">
                                 📅 {{ exam.exam_date.strftime('%b %d, %Y') }}
                             </div>
-                            <div style="font-size: 0.875rem; font-weight: 600; color: {% if exam.days_left <= 7 %}var(--error-color){% elif exam.days_left <= 14 %}var(--warning-color){% else %}var(--success-color){% endif %}; margin-top: 0.25rem;">
+                            <div style="font-size: 0.875rem; font-weight: 600; color: {{ exam_urgency_color }}; margin-top: 0.25rem;">
                                 {{ exam.days_left }} days left
                             </div>
                         </div>
