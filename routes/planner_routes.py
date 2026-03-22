@@ -122,7 +122,7 @@ def generate_plan():
         flash(result['error'], 'error')
         return redirect(url_for('planner.planner'))
     
-    flash(f'Study plan generated successfully! {result["total_sessions"]} sessions created.', 'success')
+    flash(f'Study plan generated successfully! {result["total_sessions"]} sessions across {result["study_days"]} study days were created.', 'success')
     return redirect(url_for('planner.timetable'))
 
 

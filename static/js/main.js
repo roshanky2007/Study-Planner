@@ -88,7 +88,9 @@ function editSubject(id, name, examDate, difficulty, color) {
     document.getElementById('edit_difficulty').value = difficulty;
     document.getElementById('edit_color').value = color;
     
-    document.getElementById('edit_subject_form').style.display = 'block';
+    const form = document.getElementById('edit_subject_form');
+    form.style.display = 'flex';
+    form.classList.remove('hidden');
 }
 
 // Populate reschedule form
@@ -96,7 +98,9 @@ function rescheduleSession(sessionId, currentDate) {
     document.getElementById('reschedule_session_id').value = sessionId;
     document.getElementById('reschedule_new_date').value = currentDate;
     
-    document.getElementById('reschedule_form').style.display = 'block';
+    const form = document.getElementById('reschedule_form');
+    form.style.display = 'flex';
+    form.classList.remove('hidden');
 }
 
 // Complete session with actual minutes
@@ -256,3 +260,47 @@ Your readiness score balances knowledge coverage (60%) with study consistency (4
     
     alert(explanation);
 }
+
+
+function toggleMobileNav() {
+    const shell = document.getElementById('nav_shell');
+    if (shell) shell.classList.toggle('open');
+}
+
+function closeModal(id) {
+    const modal = document.getElementById(id);
+    if (modal) modal.classList.add('hidden');
+}
+
+document.addEventListener('click', function(event) {
+    const modal = document.querySelector('.modal-shell:not(.hidden)');
+    if (modal && event.target === modal) {
+        modal.classList.add('hidden');
+    }
+});
+
+window.addEventListener('DOMContentLoaded', function() {
+    const minutesInput = document.getElementById('daily_study_minutes');
+    const sessionsInput = document.getElementById('max_sessions_per_day');
+    const minutesPreview = document.getElementById('study_minutes_preview');
+    const sessionPreview = document.getElementById('session_size_preview');
+    const colorInput = document.getElementById('color');
+    const colorText = document.getElementById('color-text');
+
+    const refreshPreview = () => {
+        if (!minutesInput || !sessionsInput || !minutesPreview || !sessionPreview) return;
+        const minutes = parseInt(minutesInput.value || '0', 10) || 0;
+        const sessions = parseInt(sessionsInput.value || '1', 10) || 1;
+        minutesPreview.textContent = `${minutes} min`;
+        sessionPreview.textContent = `${Math.max(30, Math.ceil(minutes / sessions))} min each`;
+    };
+
+    refreshPreview();
+    if (minutesInput) minutesInput.addEventListener('input', refreshPreview);
+    if (sessionsInput) sessionsInput.addEventListener('change', refreshPreview);
+    if (colorInput && colorText) {
+        const updateColor = () => colorText.textContent = colorInput.value.toUpperCase();
+        updateColor();
+        colorInput.addEventListener('input', updateColor);
+    }
+});
