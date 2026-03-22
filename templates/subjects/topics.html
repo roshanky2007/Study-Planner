@@ -1,127 +1,50 @@
 {% extends "base.html" %}
-
 {% block title %}Topics - {{ subject.name }} - Smart Study Planner{% endblock %}
-
 {% block content %}
-<div class="container">
-    <div class="page-header">
-        <h1 class="page-title" style="color: {{ subject.color }};">{{ subject.name }} - Topics</h1>
-        <p class="page-subtitle">
-            <a href="{{ url_for('subjects.list_subjects') }}" style="color: var(--primary-color);">← Back to Subjects</a>
-        </p>
-    </div>
-    
-    <!-- Statistics -->
-    <div class="grid grid-cols-4 mb-3">
-        <div class="card">
-            <div class="stat-item">
-                <div class="stat-value">{{ stats.total_topics }}</div>
-                <div class="stat-label">Total Topics</div>
-            </div>
+<div class="container stack-lg">
+    <section class="hero-panel compact" style="border-left: 6px solid {{ subject.color }};">
+        <div>
+            <p class="eyebrow">Step 2</p>
+            <h1 class="page-title">{{ subject.name }} topics</h1>
+            <p class="page-subtitle"><a href="{{ url_for('subjects.list_subjects') }}" class="text-link">← Back to subjects</a> · Add one topic at a time or paste a full checklist below.</p>
         </div>
-        
-        <div class="card">
-            <div class="stat-item">
-                <div class="stat-value">{{ stats.completed_topics }}</div>
-                <div class="stat-label">Completed</div>
+    </section>
+
+    <section class="metric-grid four-up">
+        <article class="metric-card"><span class="metric-label">Total topics</span><strong class="metric-value">{{ stats.total_topics }}</strong></article>
+        <article class="metric-card"><span class="metric-label">Completed</span><strong class="metric-value">{{ stats.completed_topics }}</strong></article>
+        <article class="metric-card"><span class="metric-label">Study time</span><strong class="metric-value">{{ stats.total_minutes }} min</strong></article>
+        <article class="metric-card"><span class="metric-label">Progress</span><strong class="metric-value">{{ stats.completion_percentage }}%</strong></article>
+    </section>
+
+    <section class="card">
+        <div class="section-head"><h2 class="card-title">Add topics</h2><span class="soft-badge">Bulk paste works here too</span></div>
+        <form method="POST" action="{{ url_for('subjects.add_topic', subject_id=subject._id) }}" class="stack-md">
+            <div class="responsive-form-grid two">
+                <div class="form-group"><label for="title" class="form-label">Single topic title</label><input type="text" id="title" name="title" class="form-input" placeholder="Ray Optics"></div>
+                <div class="form-group"><label for="estimated_minutes" class="form-label">Minutes for the single topic</label><input type="number" id="estimated_minutes" name="estimated_minutes" class="form-input" value="60" min="1"></div>
             </div>
-        </div>
-        
-        <div class="card">
-            <div class="stat-item">
-                <div class="stat-value">{{ stats.total_minutes }} min</div>
-                <div class="stat-label">Total Time</div>
-            </div>
-        </div>
-        
-        <div class="card">
-            <div class="stat-item">
-                <div class="stat-value">{{ stats.completion_percentage }}%</div>
-                <div class="stat-label">Progress</div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Add Topic Form -->
-    <div class="card mb-3">
-        <div class="card-header">
-            <h2 class="card-title">Add New Topic</h2>
-        </div>
-        
-        <form method="POST" action="{{ url_for('subjects.add_topic', subject_id=subject._id) }}">
-            <div class="form-row">
-                <div class="form-group" style="flex: 2;">
-                    <label for="title" class="form-label form-label-required">Topic Title</label>
-                    <input type="text" id="title" name="title" class="form-input" required placeholder="e.g., Ray Optics">
-                </div>
-                
-                <div class="form-group">
-                    <label for="estimated_minutes" class="form-label form-label-required">Estimated Minutes</label>
-                    <input type="number" id="estimated_minutes" name="estimated_minutes" class="form-input" value="60" min="1" required>
-                </div>
-            </div>
-            
-            <button type="submit" class="btn btn-primary">Add Topic</button>
+            <div class="form-group"><label for="topics_bulk" class="form-label">Bulk topic list</label><textarea id="topics_bulk" name="topics_bulk" class="form-input textarea-lg" placeholder="Wave Optics | 75&#10;Current Electricity | 90&#10;Mock Test | 120"></textarea><span class="form-help">If you fill the bulk list, it will be used instead of the single topic inputs.</span></div>
+            <button type="submit" class="btn btn-primary">Save topics</button>
         </form>
-    </div>
-    
-    <!-- Topics List -->
-    {% if topics %}
-        <div class="card">
-            <div class="card-header">
-                <h2 class="card-title">Topics Checklist</h2>
-            </div>
-            
-            <table style="width: 100%; border-collapse: collapse;">
-                <thead>
-                    <tr style="border-bottom: 2px solid var(--border-color); text-align: left;">
-                        <th style="padding: 1rem; width: 50px;">Status</th>
-                        <th style="padding: 1rem;">Topic Title</th>
-                        <th style="padding: 1rem; width: 150px;">Est. Time</th>
-                        <th style="padding: 1rem; width: 150px;">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for topic in topics %}
-                        <tr style="border-bottom: 1px solid var(--border-color);">
-                            <td style="padding: 1rem; text-align: center;">
-                                <form method="POST" action="{{ url_for('subjects.toggle_topic', topic_id=topic._id) }}" style="display: inline;">
-                                    <button type="submit" style="background: none; border: none; cursor: pointer; font-size: 1.5rem;">
-                                        {% if topic.status == 'completed' %}
-                                            <span style="color: var(--success-color);">✓</span>
-                                        {% else %}
-                                            <span style="color: var(--text-muted);">○</span>
-                                        {% endif %}
-                                    </button>
-                                </form>
-                            </td>
-                            
-                            <td style="padding: 1rem; {% if topic.status == 'completed' %}text-decoration: line-through; color: var(--text-muted);{% endif %}">
-                                {{ topic.title }}
-                            </td>
-                            
-                            <td style="padding: 1rem;">
-                                {{ topic.estimated_minutes }} minutes
-                            </td>
-                            
-                            <td style="padding: 1rem;">
-                                <form method="POST" action="{{ url_for('subjects.delete_topic', topic_id=topic._id) }}" style="display: inline;" onsubmit="return confirmDelete('Delete topic &quot;{{ topic.title }}&quot;?');">
-                                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-                                </form>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+    </section>
+
+    <section class="card">
+        <div class="section-head"><h2 class="card-title">Checklist</h2><span class="soft-badge">Tap complete as you finish</span></div>
+        {% if topics %}
+        <div class="stack-sm">
+            {% for topic in topics %}
+            <article class="topic-row {% if topic.status == 'completed' %}completed{% endif %}">
+                <button type="button" class="topic-toggle" onclick="toggleTopic('{{ topic._id }}')">{% if topic.status == 'completed' %}✓{% else %}○{% endif %}</button>
+                <div class="topic-main"><strong>{{ topic.title }}</strong><p>{{ topic.estimated_minutes }} minutes</p></div>
+                <span class="status-pill status-{{ topic.status }}">{{ topic.status|title }}</span>
+                <form method="POST" action="{{ url_for('subjects.delete_topic', topic_id=topic._id) }}" onsubmit="return confirmDelete('Delete topic &quot;{{ topic.title }}&quot;?');"><button type="submit" class="btn btn-danger btn-sm">Delete</button></form>
+            </article>
+            {% endfor %}
         </div>
-    {% else %}
-        <div class="card">
-            <div class="empty-state">
-                <div class="empty-state-icon">📝</div>
-                <p class="empty-state-text">No topics added yet</p>
-                <p style="color: var(--text-muted);">Break down {{ subject.name }} into topics to start planning</p>
-            </div>
-        </div>
-    {% endif %}
+        {% else %}
+        <div class="empty-state small"><div class="empty-state-icon">📝</div><p class="empty-state-text">No topics yet.</p></div>
+        {% endif %}
+    </section>
 </div>
 {% endblock %}

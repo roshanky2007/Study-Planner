@@ -1,175 +1,69 @@
 {% extends "base.html" %}
-
 {% block title %}Subjects - Smart Study Planner{% endblock %}
-
 {% block content %}
-<div class="container">
-    <div class="page-header">
-        <h1 class="page-title">📚 My Subjects</h1>
-        <p class="page-subtitle">Manage your subjects and exam dates</p>
-    </div>
-    
-    <!-- Add Subject Form -->
-    <div class="card mb-3">
-        <div class="card-header">
-            <h2 class="card-title">Add New Subject</h2>
+<div class="container stack-lg">
+    <section class="hero-panel compact">
+        <div>
+            <p class="eyebrow">Step 1</p>
+            <h1 class="page-title">Set up your subjects</h1>
+            <p class="page-subtitle">You can now add a subject and paste all its topics in one go, so setup stops feeling slow.</p>
         </div>
-        
-        <form method="POST" action="{{ url_for('subjects.add_subject') }}">
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="name" class="form-label form-label-required">Subject Name</label>
-                    <input type="text" id="name" name="name" class="form-input" required placeholder="e.g., Physics">
-                </div>
-                
-                <div class="form-group">
-                    <label for="exam_date" class="form-label form-label-required">Exam Date</label>
-                    <input type="date" id="exam_date" name="exam_date" class="form-input" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="difficulty" class="form-label form-label-required">Difficulty (1-5)</label>
-                    <select id="difficulty" name="difficulty" class="form-select" required>
-                        <option value="1">1 - Very Easy</option>
-                        <option value="2">2 - Easy</option>
-                        <option value="3" selected>3 - Medium</option>
-                        <option value="4">4 - Hard</option>
-                        <option value="5">5 - Very Hard</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="color" class="form-label">Color Tag</label>
-                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <input type="color" id="color" name="color" class="form-input" value="#3B82F6" style="width: 80px; height: 40px; padding: 2px;">
-                        <div id="color-preview" style="width: 80px; height: 40px; border-radius: 8px; background-color: #3B82F6; border: 2px solid var(--border-color);"></div>
-                        <span id="color-text" style="font-family: monospace; color: var(--text-secondary); font-size: 0.9rem;">​#3B82F6</span>
-                    </div>
-                </div>
-                <script>
-                document.getElementById('color').addEventListener('change', function() {
-                    document.getElementById('color-preview').style.backgroundColor = this.value;
-                    document.getElementById('color-text').textContent = this.value.toUpperCase();
-                });
-                document.getElementById('color').addEventListener('input', function() {
-                    document.getElementById('color-preview').style.backgroundColor = this.value;
-                    document.getElementById('color-text').textContent = this.value.toUpperCase();
-                });
-                </script>
+    </section>
+
+    <section class="card">
+        <div class="section-head"><h2 class="card-title">Add a new subject</h2><span class="soft-badge">Supports bulk topics</span></div>
+        <form method="POST" action="{{ url_for('subjects.add_subject') }}" class="stack-md">
+            <div class="responsive-form-grid four">
+                <div class="form-group"><label for="name" class="form-label form-label-required">Subject name</label><input type="text" id="name" name="name" class="form-input" required placeholder="Physics"></div>
+                <div class="form-group"><label for="exam_date" class="form-label form-label-required">Exam date</label><input type="date" id="exam_date" name="exam_date" class="form-input" required></div>
+                <div class="form-group"><label for="difficulty" class="form-label form-label-required">Difficulty</label><select id="difficulty" name="difficulty" class="form-select" required><option value="1">1 · Very easy</option><option value="2">2 · Easy</option><option value="3" selected>3 · Medium</option><option value="4">4 · Hard</option><option value="5">5 · Very hard</option></select></div>
+                <div class="form-group"><label for="color" class="form-label">Color tag</label><div class="color-field"><input type="color" id="color" name="color" class="color-input" value="#3B82F6"><span id="color-text" class="soft-badge">#3B82F6</span></div></div>
             </div>
-            
-            <button type="submit" class="btn btn-primary">Add Subject</button>
+            <div class="form-group"><label for="topics_bulk" class="form-label">Optional quick topic list</label><textarea id="topics_bulk" name="topics_bulk" class="form-input textarea-lg" placeholder="Kinematics | 90&#10;Newton's Laws | 60&#10;Revision | 45"></textarea><span class="form-help">One topic per line. Use <strong>Title | Minutes</strong>. If you skip minutes, it defaults to 60.</span></div>
+            <button type="submit" class="btn btn-primary">Add subject</button>
         </form>
-    </div>
-    
-    <!-- Subjects List -->
+    </section>
+
     {% if subjects %}
-        <div class="grid grid-cols-2">
-            {% for subject in subjects %}
-                {% set urgent_class = 'urgent' if subject.days_left and subject.days_left <= 7 else '' %}
-                <div class="card subject-card" style="border-left: 5px solid {{ subject.color }}; position: relative;">
-                    <div style="position: absolute; top: 1rem; right: 1rem; display: flex; gap: 0.5rem;">
-                        <div style="width: 32px; height: 32px; background-color: {{ subject.color }}; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.85rem; font-weight: bold;">D{{ subject.difficulty }}</div>
-                    </div>
-                    <div class="subject-header">
-                        <div>
-                            <h3 class="subject-name" style="color: {{ subject.color }}; margin-bottom: 0.5rem;">
-                                {{ subject.name }}
-                            </h3>
-                            <div class="subject-meta" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.9rem;">
-                                <span>📅 {{ subject.exam_date.strftime('%b %d') }}</span>
-                                <span style="{% if subject.days_left and subject.days_left <= 7 %}color: var(--error-color); font-weight: 600;{% endif %}">⏰ {{ subject.days_left }} days</span>
-                                <span>📊 {{ subject.stats.completed_topics }}/{{ subject.stats.total_topics }} topics</span>
-                                <span>⏱ {{ subject.stats.total_minutes }} min</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div style="margin: 1rem 0;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                            <span style="font-size: 0.875rem; color: var(--text-secondary);">Syllabus Progress</span>
-                            <span style="font-weight: 600; color: {{ subject.color }};">{{ subject.stats.completion_percentage }}%</span>
-                        </div>
-                        <div class="progress-bar-container" style="height: 8px;">
-                            <div class="progress-bar-fill" style="width: {{ subject.stats.completion_percentage }}%; background-color: {{ subject.color }};"></div>
-                        </div>
-                    </div>
-                    
-                    <div style="display: flex; gap: 0.5rem; justify-content: space-between; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
-                        <a href="{{ url_for('subjects.manage_topics', subject_id=subject._id) }}" class="btn btn-primary btn-sm" style="flex: 1; text-align: center;">
-                            📝 Manage Topics
-                        </a>
-                        
-                        <button onclick="editSubject('{{ subject._id }}', '{{ subject.name }}', '{{ subject.exam_date.strftime('%Y-%m-%d') }}', '{{ subject.difficulty }}', '{{ subject.color }}')" class="btn btn-secondary btn-sm" style="padding: 0.5rem 0.75rem;">
-                            ✎ Edit
-                        </button>
-                        
-                        <form method="POST" action="{{ url_for('subjects.delete_subject', subject_id=subject._id) }}" style="display: inline;" onsubmit="return confirmDelete('Delete &quot;{{ subject.name }}&quot; and all its topics? This cannot be undone.');"><button type="submit" class="btn btn-danger btn-sm" style="padding: 0.5rem 0.75rem;">🗑 Delete</button>
-                            </form>
-                        </div>
-                    </div>
+    <section class="subject-grid">
+        {% for subject in subjects %}
+        <article class="card subject-panel" style="--subject-color: {{ subject.color }};">
+            <div class="section-head align-start">
+                <div>
+                    <h3 class="subject-title">{{ subject.name }}</h3>
+                    <p class="page-subtitle small">Exam on {{ subject.exam_date.strftime('%b %d, %Y') }}</p>
                 </div>
-            {% endfor %}
-        </div>
-    {% else %}
-        <div class="card">
-            <div class="empty-state">
-                <div class="empty-state-icon">📚</div>
-                <p class="empty-state-text">No subjects added yet</p>
-                <p style="color: var(--text-muted);">Add your first subject using the form above</p>
+                <span class="difficulty-pill">D{{ subject.difficulty }}</span>
             </div>
-        </div>
+            <div class="info-pairs two-cols">
+                <div><span class="muted-label">Time left</span><strong>{{ subject.days_left }} days</strong></div>
+                <div><span class="muted-label">Topics</span><strong>{{ subject.stats.completed_topics }}/{{ subject.stats.total_topics }}</strong></div>
+                <div><span class="muted-label">Planned minutes</span><strong>{{ subject.stats.total_minutes }} min</strong></div>
+                <div><span class="muted-label">Progress</span><strong>{{ subject.stats.completion_percentage }}%</strong></div>
+            </div>
+            <div class="progress-bar-container"><div class="progress-bar-fill" style="width: {{ subject.stats.completion_percentage }}%; background: {{ subject.color }};"></div></div>
+            <div class="subject-actions">
+                <a href="{{ url_for('subjects.manage_topics', subject_id=subject._id) }}" class="btn btn-primary btn-sm">Manage topics</a>
+                <button onclick="editSubject('{{ subject._id }}', '{{ subject.name }}', '{{ subject.exam_date.strftime('%Y-%m-%d') }}', '{{ subject.difficulty }}', '{{ subject.color }}')" class="btn btn-secondary btn-sm">Edit</button>
+                <form method="POST" action="{{ url_for('subjects.delete_subject', subject_id=subject._id) }}" onsubmit="return confirmDelete('Delete &quot;{{ subject.name }}&quot; and all topics?');"><button type="submit" class="btn btn-danger btn-sm">Delete</button></form>
+            </div>
+        </article>
+        {% endfor %}
+    </section>
+    {% else %}
+    <section class="card"><div class="empty-state"><div class="empty-state-icon">📚</div><p class="empty-state-text">No subjects yet.</p><p class="page-subtitle">Start with the subjects that matter most for your next exams.</p></div></section>
     {% endif %}
 </div>
 
-<!-- Edit Subject Form (Hidden) -->
-<div id="edit_subject_form" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 2rem; border-radius: 8px; box-shadow: var(--shadow-lg); z-index: 1000; min-width: 400px;">
-    <h3 style="margin-bottom: 1rem;">Edit Subject</h3>
-    <form method="POST" action="" id="edit_form_element">
-        <input type="hidden" id="edit_subject_id" name="subject_id">
-        
-        <div class="form-group">
-            <label for="edit_subject_name" class="form-label">Subject Name</label>
-            <input type="text" id="edit_subject_name" name="name" class="form-input" required>
-        </div>
-        
-        <div class="form-group">
-            <label for="edit_exam_date" class="form-label">Exam Date</label>
-            <input type="date" id="edit_exam_date" name="exam_date" class="form-input" required>
-        </div>
-        
-        <div class="form-group">
-            <label for="edit_difficulty" class="form-label">Difficulty</label>
-            <select id="edit_difficulty" name="difficulty" class="form-select" required>
-                <option value="1">1 - Very Easy</option>
-                <option value="2">2 - Easy</option>
-                <option value="3">3 - Medium</option>
-                <option value="4">4 - Hard</option>
-                <option value="5">5 - Very Hard</option>
-            </select>
-        </div>
-        
-        <div class="form-group">
-            <label for="edit_color" class="form-label">Color Tag</label>
-            <input type="color" id="edit_color" name="color" class="form-input">
-        </div>
-        
-        <div style="display: flex; gap: 0.5rem;">
-            <button type="submit" class="btn btn-primary">Save Changes</button>
-            <button type="button" class="btn btn-secondary" onclick="document.getElementById('edit_subject_form').style.display='none'">Cancel</button>
-        </div>
-    </form>
+<div id="edit_subject_form" class="modal-shell hidden">
+    <div class="modal-card">
+        <div class="section-head"><h3>Edit subject</h3><button class="icon-btn" onclick="closeModal('edit_subject_form')">×</button></div>
+        <form method="POST" action="" id="edit_form_element" class="stack-md">
+            <input type="hidden" id="edit_subject_id" name="subject_id">
+            <div class="form-group"><label for="edit_subject_name" class="form-label">Subject name</label><input type="text" id="edit_subject_name" name="name" class="form-input" required></div>
+            <div class="responsive-form-grid three"><div class="form-group"><label for="edit_exam_date" class="form-label">Exam date</label><input type="date" id="edit_exam_date" name="exam_date" class="form-input" required></div><div class="form-group"><label for="edit_difficulty" class="form-label">Difficulty</label><select id="edit_difficulty" name="difficulty" class="form-select" required><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select></div><div class="form-group"><label for="edit_color" class="form-label">Color</label><input type="color" id="edit_color" name="color" class="color-input"></div></div>
+            <button type="submit" class="btn btn-primary">Save changes</button>
+        </form>
+    </div>
 </div>
-
-<script>
-function editSubject(id, name, examDate, difficulty, color) {
-    document.getElementById('edit_subject_id').value = id;
-    document.getElementById('edit_subject_name').value = name;
-    document.getElementById('edit_exam_date').value = examDate;
-    document.getElementById('edit_difficulty').value = difficulty;
-    document.getElementById('edit_color').value = color;
-    document.getElementById('edit_subject_form').style.display = 'block';
-    document.getElementById('edit_form_element').action = `/subjects/${id}/edit`;
-}
-</script>
 {% endblock %}

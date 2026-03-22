@@ -88,7 +88,10 @@ function editSubject(id, name, examDate, difficulty, color) {
     document.getElementById('edit_difficulty').value = difficulty;
     document.getElementById('edit_color').value = color;
     
-    document.getElementById('edit_subject_form').style.display = 'block';
+    document.getElementById('edit_form_element').action = `/subjects/${id}/edit`;
+    const form = document.getElementById('edit_subject_form');
+    form.style.display = 'flex';
+    form.classList.remove('hidden');
 }
 
 // Populate reschedule form
@@ -96,7 +99,10 @@ function rescheduleSession(sessionId, currentDate) {
     document.getElementById('reschedule_session_id').value = sessionId;
     document.getElementById('reschedule_new_date').value = currentDate;
     
-    document.getElementById('reschedule_form').style.display = 'block';
+    document.getElementById('reschedule_form_element').action = `/sessions/${sessionId}/reschedule`;
+    const form = document.getElementById('reschedule_form');
+    form.style.display = 'flex';
+    form.classList.remove('hidden');
 }
 
 // Complete session with actual minutes
@@ -255,4 +261,74 @@ Your readiness score balances knowledge coverage (60%) with study consistency (4
     `;
     
     alert(explanation);
+}
+
+
+function toggleMobileNav() {
+    const shell = document.getElementById('nav_shell');
+    if (shell) shell.classList.toggle('open');
+}
+
+function closeModal(id) {
+    const modal = document.getElementById(id);
+    if (modal) modal.classList.add('hidden');
+}
+
+document.addEventListener('click', function(event) {
+    const modal = document.querySelector('.modal-shell:not(.hidden)');
+    if (modal && event.target === modal) {
+        modal.classList.add('hidden');
+    }
+});
+
+window.addEventListener('DOMContentLoaded', function() {
+    const minutesInput = document.getElementById('daily_study_minutes');
+    const sessionsInput = document.getElementById('max_sessions_per_day');
+    const minutesPreview = document.getElementById('study_minutes_preview');
+    const sessionPreview = document.getElementById('session_size_preview');
+    const blocksPreview = document.getElementById('blocks_preview');
+    const selectedBlocks = document.querySelectorAll('input[name="blocks"]');
+    const colorInput = document.getElementById('color');
+    const colorText = document.getElementById('color-text');
+
+    const refreshPreview = () => {
+        if (minutesInput && sessionsInput && minutesPreview && sessionPreview) {
+            const minutes = parseInt(minutesInput.value || '0', 10) || 0;
+            const sessions = parseInt(sessionsInput.value || '1', 10) || 1;
+            minutesPreview.textContent = `${minutes} min`;
+            sessionPreview.textContent = `${Math.max(30, Math.ceil(minutes / sessions))} min each`;
+        }
+
+        if (blocksPreview) {
+            const labels = Array.from(document.querySelectorAll('input[name="blocks"]:checked')).map(input => input.value);
+            blocksPreview.textContent = labels.length ? labels.join(' · ') : 'Choose at least one';
+        }
+    };
+
+    refreshPreview();
+    if (minutesInput) minutesInput.addEventListener('input', refreshPreview);
+    if (sessionsInput) sessionsInput.addEventListener('change', refreshPreview);
+    selectedBlocks.forEach(input => input.addEventListener('change', refreshPreview));
+    if (colorInput && colorText) {
+        const updateColor = () => colorText.textContent = colorInput.value.toUpperCase();
+        updateColor();
+        colorInput.addEventListener('input', updateColor);
+    }
+});
+
+
+function openCompleteModal(sessionId, plannedMinutes, title) {
+    const modal = document.getElementById('complete_session_modal');
+    const form = document.getElementById('complete_session_form');
+    const heading = document.getElementById('complete_session_heading');
+    const minutesInput = document.getElementById('actual_minutes');
+    const notesInput = document.getElementById('session_notes');
+    if (!modal || !form || !heading || !minutesInput) return;
+
+    form.action = `/sessions/${sessionId}/complete`;
+    heading.textContent = `${title} · planned ${plannedMinutes} minutes`;
+    minutesInput.value = plannedMinutes;
+    if (notesInput) notesInput.value = '';
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
 }

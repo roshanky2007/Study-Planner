@@ -258,3 +258,29 @@ def get_upcoming_exams(mongo, user_id, limit=5):
         subject['days_left'] = days_left
     
     return subjects
+
+
+
+def get_recent_study_activity(mongo, user_id, days=7):
+    """Return day-by-day study activity for recent days."""
+    today = datetime.now().date()
+    activity = []
+
+    for offset in range(days - 1, -1, -1):
+        target_date = today - timedelta(days=offset)
+        start_of_day = datetime(target_date.year, target_date.month, target_date.day)
+        end_of_day = datetime(target_date.year, target_date.month, target_date.day, 23, 59, 59)
+
+        logs = list(mongo.db.study_logs.find({
+            'user_id': ObjectId(user_id),
+            'logged_at': {'$gte': start_of_day, '$lte': end_of_day}
+        }))
+
+        activity.append({
+            'date': target_date,
+            'label': target_date.strftime('%a'),
+            'minutes': sum(log.get('actual_minutes', 0) for log in logs),
+            'sessions': len(logs)
+        })
+
+    return activity
