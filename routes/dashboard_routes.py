@@ -6,8 +6,8 @@ from flask import Blueprint, render_template, current_app, session
 from datetime import datetime, timedelta
 from utils.auth import login_required
 from utils.db_helpers import (
-    get_sessions_for_date, get_backlog_sessions, 
-    get_upcoming_exams, get_study_streak, get_overall_progress
+    get_sessions_for_date, get_backlog_sessions,
+    get_upcoming_exams, get_study_streak, get_overall_progress, get_subjects_for_user
 )
 
 dashboard_bp = Blueprint('dashboard', __name__)
@@ -42,6 +42,9 @@ def dashboard():
     
     # Get overall progress
     progress = get_overall_progress(current_app.mongo, user_id)
+
+    subjects = get_subjects_for_user(current_app.mongo, user_id)
+    exam_pressure = min([s.get('days_left', 9999) for s in subjects], default=None)
     
     # Get this week's sessions (7-day strip)
     week_sessions = []
@@ -69,4 +72,6 @@ def dashboard():
                          upcoming_exams=upcoming_exams,
                          streak=streak,
                          progress=progress,
-                         week_sessions=week_sessions)
+                         week_sessions=week_sessions,
+                         subjects=subjects,
+                         exam_pressure=exam_pressure)
