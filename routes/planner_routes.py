@@ -7,9 +7,28 @@ from datetime import datetime, timedelta
 from bson.objectid import ObjectId
 from utils.auth import login_required
 from utils.planner import StudyPlanner, get_plan_explanation
-from utils.db_helpers import get_subjects_for_user, get_sessions_for_date, get_topic_statistics
+from utils.db_helpers import get_subjects_for_user, get_sessions_for_date, get_topic_statistics, get_overall_progress, get_study_streak
 
 planner_bp = Blueprint('planner', __name__)
+
+
+def _json_session_response(user_id, session_id, status):
+    updated_session = current_app.mongo.db.sessions.find_one({'_id': ObjectId(session_id)})
+    progress = get_overall_progress(current_app.mongo, user_id)
+    streak = get_study_streak(current_app.mongo, user_id)
+    today_sessions = get_sessions_for_date(current_app.mongo, user_id, datetime.now())
+    return jsonify({
+        'success': True,
+        'status': status,
+        'session_id': session_id,
+        'progress_percentage': progress['completion_percentage'],
+        'streak': streak,
+        'today_count': len(today_sessions),
+        'today_minutes': sum(sess.get('planned_minutes', 0) for sess in today_sessions),
+        'session': {
+            'status': updated_session.get('status') if updated_session else status
+        }
+    })
 
 
 @planner_bp.route('/planner')
@@ -215,6 +234,17 @@ def complete_session(session_id):
         'logged_at': datetime.now()
     })
 
+    remaining_topic_sessions = current_app.mongo.db.sessions.count_documents({
+        'user_id': ObjectId(user_id),
+        'topic_id': sess['topic_id'],
+        'status': {'$in': ['pending', 'skipped']}
+    })
+    if remaining_topic_sessions == 0:
+        current_app.mongo.db.topics.update_one({'_id': sess['topic_id']}, {'$set': {'status': 'completed'}})
+
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return _json_session_response(user_id, session_id, 'completed')
+
     flash('Session marked as completed!', 'success')
     return redirect(request.referrer or url_for('dashboard.dashboard'))
 
@@ -233,6 +263,8 @@ def skip_session(session_id):
         return jsonify({'error': 'Session not found'}), 404
 
     current_app.mongo.db.sessions.update_one({'_id': ObjectId(session_id)}, {'$set': {'status': 'skipped'}})
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return _json_session_response(user_id, session_id, 'skipped')
     flash('Session skipped. It has been added to your backlog.', 'info')
     return redirect(request.referrer or url_for('dashboard.dashboard'))
 
@@ -264,6 +296,9 @@ def reschedule_session(session_id):
         {'_id': ObjectId(session_id)},
         {'$set': {'date': new_date, 'block': new_block, 'status': 'pending'}}
     )
+
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return _json_session_response(user_id, session_id, 'pending')
 
     flash('Session rescheduled successfully!', 'success')
     return redirect(request.referrer or url_for('dashboard.dashboard'))

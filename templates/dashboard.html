@@ -2,133 +2,154 @@
 {% block title %}Dashboard - Smart Study Planner{% endblock %}
 {% block content %}
 <div class="container stack-lg">
-    <section class="hero-panel">
+    <section class="hero-panel compact">
         <div>
-            <p class="eyebrow">Today at a glance</p>
-            <h1 class="page-title">Your study dashboard</h1>
-            <p class="page-subtitle">{{ today.strftime('%A, %B %d, %Y') }} · Use the quick complete flow to log what you actually studied.</p>
+            <p class="eyebrow">Today</p>
+            <h1 class="page-title">Your Dashboard</h1>
+            <p class="page-subtitle">Plan your schedule, finish the next session, and keep your week under control.</p>
         </div>
         <div class="hero-actions">
-            <a class="btn btn-primary" href="{{ url_for('planner.planner') }}">Rebuild plan</a>
-            <a class="btn btn-secondary" href="{{ url_for('subjects.list_subjects') }}">Manage subjects</a>
+            <a class="btn btn-primary" href="{{ url_for('planner.planner') }}">Generate plan</a>
+            <a class="btn btn-secondary" href="{{ url_for('subjects.list_subjects') }}">Add topics</a>
         </div>
     </section>
 
     <section class="metric-grid">
-        <article class="metric-card"><span class="metric-label">Overall progress</span><strong class="metric-value">{{ progress.completion_percentage }}%</strong><span class="metric-note">{{ progress.completed_topics }}/{{ progress.total_topics }} topics done</span></article>
-        <article class="metric-card"><span class="metric-label">Study streak</span><strong class="metric-value">{{ streak }} days</strong><span class="metric-note">Consistency builds readiness</span></article>
-        <article class="metric-card"><span class="metric-label">Sessions today</span><strong class="metric-value">{{ today_sessions|length }}</strong><span class="metric-note">Planned across your blocks</span></article>
-        <article class="metric-card"><span class="metric-label">Closest exam</span><strong class="metric-value">{% if exam_pressure is not none %}{{ exam_pressure }} days{% else %}—{% endif %}</strong><span class="metric-note">{% if subjects %}Stay focused on the urgent subjects{% else %}Add a subject to start{% endif %}</span></article>
+        <article class="metric-card"><span class="metric-label">Progress</span><strong class="metric-value" id="metric_progress">{{ progress.completion_percentage }}%</strong><span class="metric-note">{{ progress.completed_topics }}/{{ progress.total_topics }} topics done</span></article>
+        <article class="metric-card"><span class="metric-label">Today minutes</span><strong class="metric-value" id="metric_minutes">{{ today_minutes }} min</strong><span class="metric-note">Planned across three blocks</span></article>
+        <article class="metric-card"><span class="metric-label">Streak</span><strong class="metric-value" id="metric_streak">{{ streak }} days</strong><span class="metric-note">Based on actual study logs</span></article>
+        <article class="metric-card"><span class="metric-label">Backlog</span><strong class="metric-value" id="metric_backlog">{{ backlog|length }}</strong><span class="metric-note">Sessions waiting to be moved</span></article>
     </section>
 
-    <div class="dashboard-layout">
+    <div class="dashboard-layout dashboard-layout-wide">
         <div class="stack-lg">
-            <section class="card spotlight-card">
-                {% if today_sessions %}
-                    {% set next_session = today_sessions[0] %}
-                    <p class="eyebrow">Next session</p>
-                    <div class="spotlight-main">
-                        <div>
-                            <h2>{{ next_session.subject.name if next_session.subject else 'Study session' }}</h2>
-                            <p>{{ next_session.topic.title if next_session.topic else 'Review topic' }}</p>
-                            <div class="inline-meta">
-                                <span>{{ next_session.block }}</span>
-                                <span>{{ next_session.planned_minutes }} min</span>
-                                <span>{{ next_session.status|title }}</span>
-                            </div>
-                        </div>
-                        {% if next_session.status == 'pending' %}
-                        <button class="btn btn-primary" type="button" onclick="openCompleteModal('{{ next_session._id }}', '{{ next_session.planned_minutes }}', '{{ next_session.subject.name if next_session.subject else 'Study session' }}')">Complete with notes</button>
+            <section class="card next-up-card">
+                <div class="section-head no-margin">
+                    <div>
+                        <p class="eyebrow">Next up</p>
+                        {% if next_session %}
+                        <h2 class="card-title">{{ next_session.subject.name.title() if next_session.subject else 'Study session' }} — {{ next_session.topic.title.title() if next_session.topic else 'Review topic' }}</h2>
+                        {% else %}
+                        <h2 class="card-title">No sessions today</h2>
                         {% endif %}
                     </div>
+                    {% if next_session and next_session.status == 'pending' %}
+                    <button class="btn btn-primary" type="button" onclick="openCompleteModal('{{ next_session._id }}', '{{ next_session.planned_minutes }}', '{{ next_session.subject.name.title() if next_session.subject else 'Study session' }}')">Complete</button>
+                    {% endif %}
+                </div>
+                {% if next_session %}
+                <div class="inline-meta neutral-meta">
+                    <span>{{ next_session.block }}</span>
+                    <span>{{ next_session.planned_minutes }} min</span>
+                    <span>{{ next_session.status|title }}</span>
+                </div>
                 {% else %}
-                    <p class="eyebrow">No plan for today</p>
-                    <h2>Build a fresh schedule</h2>
-                    <p class="page-subtitle">Generate a timetable so your subjects, topics, and revision slots are actually organized.</p>
-                    <a href="{{ url_for('planner.planner') }}" class="btn btn-primary">Generate study plan</a>
+                <div class="empty-state empty-state-left">
+                    <p class="empty-state-text">No sessions today</p>
+                    <p class="page-subtitle">Generate a plan or add more topics to create a clearer schedule.</p>
+                    <div class="hero-actions">
+                        <a href="{{ url_for('planner.planner') }}" class="btn btn-primary">Generate plan</a>
+                        <a href="{{ url_for('subjects.list_subjects') }}" class="text-link">Add topics</a>
+                    </div>
+                </div>
                 {% endif %}
             </section>
 
-            <section class="card">
-                <div class="section-head"><h2 class="card-title">Today's sessions</h2><span class="soft-badge">{{ today_sessions|length }} planned</span></div>
+            <section class="card timeline-card">
+                <div class="section-head"><h2 class="card-title">Today Timeline</h2><span class="soft-badge">Morning, Afternoon, Evening</span></div>
                 {% if today_sessions %}
-                    <div class="stack-md">
-                    {% for block in ['Morning', 'Afternoon', 'Evening'] %}
-                        {% if block in sessions_by_block %}
-                            <div class="block-group">
-                                <div class="block-header"><h3>{{ block }}</h3><span>{{ sessions_by_block[block]|length }} sessions</span></div>
-                                <div class="stack-sm">
-                                {% for session in sessions_by_block[block] %}
-                                    <article class="session-card clean-session" style="--subject-color: {{ session.subject.color if session.subject else '#3B82F6' }};">
-                                        <div class="session-content">
+                <div class="timeline-shell">
+                    {% for block in timeline_blocks %}
+                    <section class="timeline-block {% if block.is_current %}is-current{% endif %}">
+                        <div class="timeline-rail">
+                            <span class="timeline-dot"></span>
+                            {% if not loop.last %}<span class="timeline-line"></span>{% endif %}
+                        </div>
+                        <div class="timeline-content">
+                            <div class="block-header"><h3>{{ block.name }}</h3><span>{{ block.total_sessions }} sessions</span></div>
+                            {% if block.subject_groups %}
+                            <div class="stack-md">
+                                {% for group in block.subject_groups %}
+                                <article class="subject-flow-card" style="--subject-color: {{ group.subject.color if group.subject else '#3B82F6' }};">
+                                    <div class="subject-flow-header">
+                                        <div class="subject-flow-title-wrap">
+                                            <span class="subject-color-chip"></span>
                                             <div>
-                                                <p class="session-subject">{{ session.subject.name if session.subject else 'Unknown subject' }}</p>
-                                                <h4 class="session-topic">{{ session.topic.title if session.topic else 'Unknown topic' }}</h4>
-                                                <div class="inline-meta compact"><span>{{ session.planned_minutes }} min</span><span>{{ block }}</span>{% if session.notes %}<span>{{ session.notes }}</span>{% endif %}</div>
+                                                <h4 class="subject-flow-title">{{ group.subject.name.title() if group.subject else 'Unknown Subject' }}</h4>
+                                                <p class="subject-flow-why" title="{{ group.reason }}">Why this? {{ group.reason }}</p>
                                             </div>
-                                            <span class="status-pill status-{{ session.status }}">{{ session.status|title }}</span>
                                         </div>
-                                        {% if session.status == 'pending' %}
-                                        <div class="session-actions wrap-actions">
-                                            <button type="button" class="btn btn-success btn-sm" onclick="openCompleteModal('{{ session._id }}', '{{ session.planned_minutes }}', '{{ session.subject.name if session.subject else 'Study session' }}')">Complete</button>
-                                            <form method="POST" action="{{ url_for('planner.skip_session', session_id=session._id) }}"><button type="submit" class="btn btn-secondary btn-sm">Skip</button></form>
-                                            <button onclick="rescheduleSession('{{ session._id }}', '{{ today.strftime('%Y-%m-%d') }}')" class="btn btn-secondary btn-sm" type="button">Reschedule</button>
-                                        </div>
-                                        {% endif %}
-                                    </article>
+                                    </div>
+                                    <div class="stack-sm">
+                                        {% for session in group.sessions %}
+                                        <article class="timeline-session-card status-card-{{ session.status }}" data-session-id="{{ session._id }}">
+                                            <div class="session-main-row">
+                                                <div>
+                                                    <h5 class="session-topic">{{ session.topic.title.title() if session.topic else 'Unknown Topic' }}</h5>
+                                                    <div class="session-meta-row">
+                                                        <span class="meta-item">{{ session.planned_minutes }} min</span>
+                                                        <span class="meta-item">{{ block.name }}</span>
+                                                    </div>
+                                                </div>
+                                                <span class="status-pill status-{{ session.status }} js-status-pill">{{ 'Done' if session.status == 'completed' else session.status|title }}</span>
+                                            </div>
+                                            {% if session.status == 'pending' %}
+                                            <div class="session-actions wrap-actions">
+                                                <button type="button" class="btn btn-primary btn-sm" onclick="completeSessionInline('{{ session._id }}', {{ session.planned_minutes }}, '{{ group.subject.name.title() if group.subject else 'Study session' }}')">Complete</button>
+                                                <button type="button" class="btn btn-secondary btn-sm" onclick="skipSessionInline('{{ session._id }}')">Skip</button>
+                                                <button type="button" class="btn btn-secondary btn-sm" onclick="rescheduleSession('{{ session._id }}', '{{ today.strftime('%Y-%m-%d') }}')">Reschedule</button>
+                                            </div>
+                                            {% endif %}
+                                        </article>
+                                        {% endfor %}
+                                    </div>
+                                </article>
                                 {% endfor %}
-                                </div>
                             </div>
-                        {% endif %}
-                    {% endfor %}
-                    </div>
-                {% else %}
-                    <div class="empty-state"><div class="empty-state-icon">🗓️</div><p class="empty-state-text">No study blocks scheduled for today.</p></div>
-                {% endif %}
-            </section>
-
-            {% if backlog %}
-            <section class="card">
-                <div class="section-head"><h2 class="card-title">Backlog</h2><span class="soft-badge warning">{{ backlog|length }} pending catch-ups</span></div>
-                <div class="stack-sm">
-                    {% for session in backlog[:4] %}
-                    <article class="mini-row">
-                        <div>
-                            <strong>{{ session.subject.name if session.subject else 'Unknown subject' }}</strong>
-                            <p>{{ session.topic.title if session.topic else 'Unknown topic' }}</p>
+                            {% else %}
+                            <div class="timeline-empty">No sessions in this block.</div>
+                            {% endif %}
                         </div>
-                        <div class="mini-row-actions">
-                            <span class="soft-badge">{{ session.date.strftime('%b %d') }}</span>
-                            <button onclick="rescheduleSession('{{ session._id }}', '{{ today.strftime('%Y-%m-%d') }}')" class="btn btn-secondary btn-sm" type="button">Move</button>
-                        </div>
-                    </article>
+                    </section>
                     {% endfor %}
                 </div>
+                {% else %}
+                <div class="empty-state empty-state-left">
+                    <p class="empty-state-text">No sessions today</p>
+                    <p class="page-subtitle">Generate a plan to build your timeline, or add more topics first.</p>
+                    <div class="hero-actions">
+                        <a href="{{ url_for('planner.planner') }}" class="btn btn-primary">Generate plan</a>
+                        <a href="{{ url_for('subjects.list_subjects') }}" class="text-link">Add topics</a>
+                    </div>
+                </div>
+                {% endif %}
             </section>
-            {% endif %}
         </div>
 
-        <aside class="stack-lg">
+        <aside class="stack-lg sidebar-width">
             <section class="card">
-                <div class="section-head"><h2 class="card-title">This week</h2><a href="{{ url_for('planner.timetable') }}" class="text-link">Open timetable</a></div>
+                <div class="section-head"><h2 class="card-title">This Week</h2><a href="{{ url_for('planner.timetable') }}" class="text-link">Open timetable</a></div>
                 <div class="stack-sm">
                     {% for day in week_sessions %}
-                    <div class="week-row {% if day.is_today %}is-today{% endif %}">
+                    <a href="{{ url_for('planner.timetable') }}" class="week-row {% if day.is_today %}is-today{% endif %}">
                         <div><strong>{{ day.day_name }}</strong><p>{{ day.date.strftime('%b %d') }}</p></div>
-                        <div class="week-score">{{ day.completed }}/{{ day.total }}</div>
-                    </div>
+                        <div class="week-row-side">
+                            <div class="week-score">{{ day.completed }}/{{ day.total }}</div>
+                            <div class="mini-progress"><span style="width: {{ day.completion_pct }}%"></span></div>
+                        </div>
+                    </a>
                     {% endfor %}
                 </div>
             </section>
 
             <section class="card">
-                <div class="section-head"><h2 class="card-title">Upcoming exams</h2><a href="{{ url_for('subjects.list_subjects') }}" class="text-link">Edit</a></div>
+                <div class="section-head"><h2 class="card-title">Upcoming Exams</h2><a href="{{ url_for('subjects.list_subjects') }}" class="text-link">Edit</a></div>
                 {% if upcoming_exams %}
                     <div class="stack-sm">
                     {% for exam in upcoming_exams %}
                         <article class="exam-row">
                             <div>
-                                <strong style="color: {{ exam.color }};">{{ exam.name }}</strong>
+                                <strong>{{ exam.name.title() }}</strong>
                                 <p>{{ exam.exam_date.strftime('%b %d, %Y') }}</p>
                             </div>
                             <span class="soft-badge {% if exam.days_left <= 7 %}danger{% elif exam.days_left <= 14 %}warning{% endif %}">{{ exam.days_left }} days</span>
@@ -136,7 +157,29 @@
                     {% endfor %}
                     </div>
                 {% else %}
-                    <div class="empty-state small"><p class="empty-state-text">No exams yet.</p></div>
+                    <div class="empty-state small empty-state-left"><p class="empty-state-text">No upcoming exams</p></div>
+                {% endif %}
+            </section>
+
+            <section class="card">
+                <div class="section-head"><h2 class="card-title">Backlog</h2><span class="soft-badge">{{ backlog|length }}</span></div>
+                {% if backlog %}
+                <div class="stack-sm">
+                    {% for session in backlog[:4] %}
+                    <article class="mini-row">
+                        <div>
+                            <strong>{{ session.subject.name.title() if session.subject else 'Unknown Subject' }}</strong>
+                            <p>{{ session.topic.title.title() if session.topic else 'Unknown Topic' }}</p>
+                        </div>
+                        <div class="mini-row-actions">
+                            <span class="soft-badge">{{ session.planned_minutes }} min</span>
+                            <button onclick="rescheduleSession('{{ session._id }}', '{{ today.strftime('%Y-%m-%d') }}')" class="btn btn-secondary btn-sm" type="button">Reschedule</button>
+                        </div>
+                    </article>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state small empty-state-left"><p class="empty-state-text">Backlog is empty</p></div>
                 {% endif %}
             </section>
         </aside>
@@ -149,7 +192,7 @@
         <form method="POST" action="" id="complete_session_form" class="stack-md">
             <p id="complete_session_heading" class="page-subtitle"></p>
             <div class="form-group"><label for="actual_minutes" class="form-label">Actual minutes studied</label><input type="number" id="actual_minutes" name="actual_minutes" class="form-input" min="1" required></div>
-            <div class="form-group"><label for="session_notes" class="form-label">Quick notes</label><textarea id="session_notes" name="notes" class="form-input textarea-md" placeholder="What did you finish? Any trouble spots?"></textarea></div>
+            <div class="form-group"><label for="session_notes" class="form-label">Quick notes</label><textarea id="session_notes" name="notes" class="form-input textarea-md" placeholder="What did you finish? What needs review next?"></textarea></div>
             <button type="submit" class="btn btn-primary">Save completion</button>
         </form>
     </div>

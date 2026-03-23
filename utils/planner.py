@@ -67,22 +67,12 @@ class StudyPlanner:
             topic_minutes = topic.get('estimated_minutes', self.DEFAULT_SESSION_MINUTES)
             base_priority = topic_minutes / total_remaining
 
-            if subject.get('exam_date'):
-                days_until_exam = max(1, (subject['exam_date'] - now).days)
-                urgency_multiplier = 1 / (days_until_exam ** 0.3)
-            else:
-                urgency_multiplier = 1.0
-
+            days_until_exam = max(1, (subject['exam_date'] - now).days) if subject.get('exam_date') else 30
             difficulty = subject.get('difficulty', 3)
-            if difficulty >= 4:
-                difficulty_multiplier = 1.3
-            elif difficulty <= 2:
-                difficulty_multiplier = 0.8
-            else:
-                difficulty_multiplier = 1.0
-
-            priority_override = topic.get('priority_override', 1.0)
-            final_priority = base_priority * urgency_multiplier * difficulty_multiplier * priority_override
+            priority_flag = 2 if topic.get('priority_override', 1.0) > 1 else 0
+            urgency_bonus = max(0, 30 - days_until_exam) / 5
+            size_bonus = topic_minutes / 60
+            final_priority = (difficulty * 2) + size_bonus + urgency_bonus + priority_flag + base_priority
 
             priorities[str(topic['_id'])] = {
                 'score': final_priority,
@@ -117,6 +107,7 @@ class StudyPlanner:
 
             day_minutes = 0
             day_sessions = []
+            subjects_per_block = {block: set() for block in blocks}
 
             for session_index in range(max_sessions):
                 if day_minutes >= daily_target:
@@ -124,8 +115,11 @@ class StudyPlanner:
 
                 best_topic = None
                 best_score = -1
+                block = blocks[session_index % len(blocks)]
                 for topic_id, info in sorted_topics:
                     if remaining_minutes.get(topic_id, 0) <= 0:
+                        continue
+                    if info['subject_id'] in subjects_per_block[block]:
                         continue
 
                     score = info['score']
@@ -150,7 +144,6 @@ class StudyPlanner:
                 if session_minutes < self.MIN_SESSION_MINUTES and remaining_minutes[topic_id] > self.MIN_SESSION_MINUTES:
                     break
 
-                block = blocks[session_index % len(blocks)]
                 session = {
                     'user_id': self.user_id,
                     'subject_id': ObjectId(info['subject_id']),
@@ -168,6 +161,7 @@ class StudyPlanner:
                 day_minutes += session_minutes
                 remaining_minutes[topic_id] -= session_minutes
                 last_subject_id = info['subject_id']
+                subjects_per_block[block].add(info['subject_id'])
 
             current_date += timedelta(days=1)
 

@@ -6,7 +6,7 @@
         <div>
             <p class="eyebrow">Step 2</p>
             <h1 class="page-title">{{ subject.name }} topics</h1>
-            <p class="page-subtitle"><a href="{{ url_for('subjects.list_subjects') }}" class="text-link">← Back to subjects</a> · Add one topic at a time or paste a full checklist below.</p>
+            <p class="page-subtitle"><a href="{{ url_for('subjects.list_subjects') }}" class="text-link">Back to subjects</a> — Add one topic at a time or paste a full checklist below.</p>
         </div>
     </section>
 
@@ -35,7 +35,7 @@
         <div class="stack-sm">
             {% for topic in topics %}
             <article class="topic-row {% if topic.status == 'completed' %}completed{% endif %}">
-                <button type="button" class="topic-toggle" onclick="toggleTopic('{{ topic._id }}')">{% if topic.status == 'completed' %}✓{% else %}○{% endif %}</button>
+                <button type="button" class="topic-toggle" onclick="toggleTopic('{{ topic._id }}')">{% if topic.status == 'completed' %}Done{% else %}Open{% endif %}</button>
                 <div class="topic-main"><strong>{{ topic.title }}</strong><p>{{ topic.estimated_minutes }} minutes</p></div>
                 <span class="status-pill status-{{ topic.status }}">{{ topic.status|title }}</span>
                 <form method="POST" action="{{ url_for('subjects.delete_topic', topic_id=topic._id) }}" onsubmit="return confirmDelete('Delete topic &quot;{{ topic.title }}&quot;?');"><button type="submit" class="btn btn-danger btn-sm">Delete</button></form>
@@ -43,7 +43,7 @@
             {% endfor %}
         </div>
         {% else %}
-        <div class="empty-state small"><div class="empty-state-icon">📝</div><p class="empty-state-text">No topics yet.</p></div>
+        <div class="empty-state small"><div class="empty-state-icon"></div><p class="empty-state-text">No topics yet.</p></div>
         {% endif %}
     </section>
 </div>

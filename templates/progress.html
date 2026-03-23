@@ -42,7 +42,7 @@
                 {% for day in recent_activity %}
                 <div class="activity-day">
                     <div class="activity-bar-shell"><div class="activity-bar" style="height: {{ [day.minutes, 8]|max }}px;"></div></div>
-                    <strong>{{ day.minutes }}m</strong>
+                    <strong>{{ day.minutes }} min</strong>
                     <span>{{ day.label }}</span>
                 </div>
                 {% endfor %}
@@ -56,7 +56,7 @@
         <div class="stack-md">
             {% for item in subject_progress %}
             <article class="subject-progress-row">
-                <div class="subject-progress-head"><div><strong style="color: {{ item.subject.color }};">{{ item.subject.name }}</strong><p>Exam {{ item.subject.exam_date.strftime('%b %d, %Y') }} · {{ item.subject.days_left }} days left</p></div><div class="right-meta"><strong>{{ item.stats.completion_percentage }}%</strong><span>{{ item.stats.completed_topics }}/{{ item.stats.total_topics }} topics</span></div></div>
+                <div class="subject-progress-head"><div><strong style="color: {{ item.subject.color }};">{{ item.subject.name }}</strong><p>Exam {{ item.subject.exam_date.strftime('%b %d, %Y') }} — {{ item.subject.days_left }} days left</p></div><div class="right-meta"><strong>{{ item.stats.completion_percentage }}%</strong><span>{{ item.stats.completed_topics }}/{{ item.stats.total_topics }} topics</span></div></div>
                 <div class="progress-bar-container"><div class="progress-bar-fill" style="width: {{ item.stats.completion_percentage }}%; background: {{ item.subject.color }};"></div></div>
             </article>
             {% endfor %}

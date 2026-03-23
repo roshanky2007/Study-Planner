@@ -16,7 +16,7 @@
             <div class="responsive-form-grid four">
                 <div class="form-group"><label for="name" class="form-label form-label-required">Subject name</label><input type="text" id="name" name="name" class="form-input" required placeholder="Physics"></div>
                 <div class="form-group"><label for="exam_date" class="form-label form-label-required">Exam date</label><input type="date" id="exam_date" name="exam_date" class="form-input" required></div>
-                <div class="form-group"><label for="difficulty" class="form-label form-label-required">Difficulty</label><select id="difficulty" name="difficulty" class="form-select" required><option value="1">1 · Very easy</option><option value="2">2 · Easy</option><option value="3" selected>3 · Medium</option><option value="4">4 · Hard</option><option value="5">5 · Very hard</option></select></div>
+                <div class="form-group"><label for="difficulty" class="form-label form-label-required">Difficulty</label><select id="difficulty" name="difficulty" class="form-select" required><option value="1">1 — Very easy</option><option value="2">2 — Easy</option><option value="3" selected>3 — Medium</option><option value="4">4 — Hard</option><option value="5">5 — Very hard</option></select></div>
                 <div class="form-group"><label for="color" class="form-label">Color tag</label><div class="color-field"><input type="color" id="color" name="color" class="color-input" value="#3B82F6"><span id="color-text" class="soft-badge">#3B82F6</span></div></div>
             </div>
             <div class="form-group"><label for="topics_bulk" class="form-label">Optional quick topic list</label><textarea id="topics_bulk" name="topics_bulk" class="form-input textarea-lg" placeholder="Kinematics | 90&#10;Newton's Laws | 60&#10;Revision | 45"></textarea><span class="form-help">One topic per line. Use <strong>Title | Minutes</strong>. If you skip minutes, it defaults to 60.</span></div>
@@ -51,7 +51,7 @@
         {% endfor %}
     </section>
     {% else %}
-    <section class="card"><div class="empty-state"><div class="empty-state-icon">📚</div><p class="empty-state-text">No subjects yet.</p><p class="page-subtitle">Start with the subjects that matter most for your next exams.</p></div></section>
+    <section class="card"><div class="empty-state"><div class="empty-state-icon"></div><p class="empty-state-text">No subjects yet.</p><p class="page-subtitle">Start with the subjects that matter most for your next exams.</p></div></section>
     {% endif %}
 </div>
 

@@ -142,58 +142,49 @@ def get_backlog_sessions(mongo, user_id):
     return sessions
 
 
-def get_study_streak(mongo, user_id):
+def get_study_streak(mongo, user_id, minimum_minutes=30):
     """
-    Calculate the current study streak (consecutive days with completed sessions)
-    
-    Args:
-        mongo: Flask-PyMongo instance
-        user_id (str): User's ObjectId as string
-        
-    Returns:
-        int: Number of consecutive days with study activity
+    Calculate the current study streak using actual study logs.
+    A day counts only if the student studied at least ``minimum_minutes``.
     """
-    # Get all completed sessions sorted by date descending
-    sessions = list(mongo.db.sessions.find({
-        'user_id': ObjectId(user_id),
-        'status': 'completed'
-    }).sort('completed_at', -1))
-    
-    if not sessions:
+    logs = list(mongo.db.study_logs.find({
+        'user_id': ObjectId(user_id)
+    }).sort('logged_at', -1))
+
+    if not logs:
         return 0
-    
-    # Get unique dates with completed sessions
-    completed_dates = set()
-    for session in sessions:
-        if session.get('completed_at'):
-            date = session['completed_at'].date()
-            completed_dates.add(date)
-    
-    # Sort dates descending
-    sorted_dates = sorted(completed_dates, reverse=True)
-    
-    if not sorted_dates:
+
+    minutes_by_day = {}
+    for log in logs:
+        logged_at = log.get('logged_at')
+        if not logged_at:
+            continue
+        day = logged_at.date()
+        minutes_by_day[day] = minutes_by_day.get(day, 0) + log.get('actual_minutes', 0)
+
+    qualified_days = sorted(
+        [day for day, minutes in minutes_by_day.items() if minutes >= minimum_minutes],
+        reverse=True,
+    )
+
+    if not qualified_days:
         return 0
-    
-    # Check if today or yesterday has activity
+
     today = datetime.now().date()
     yesterday = today - timedelta(days=1)
-    
-    if sorted_dates[0] not in [today, yesterday]:
-        return 0  # Streak broken
-    
-    # Count consecutive days
+    if qualified_days[0] not in [today, yesterday]:
+        return 0
+
     streak = 1
-    current_date = sorted_dates[0]
-    
-    for i in range(1, len(sorted_dates)):
+    current_date = qualified_days[0]
+    for day in qualified_days[1:]:
         expected_date = current_date - timedelta(days=1)
-        if sorted_dates[i] == expected_date:
+        if day == expected_date:
             streak += 1
-            current_date = sorted_dates[i]
+            current_date = day
         else:
             break
-    
+
     return streak
 
 

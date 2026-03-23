@@ -252,7 +252,7 @@ Where:
 - Consistency Score = (study streak / plan duration) × 100, capped at 100%
 
 Interpretation:
-- 80-100%: Exam Ready ✓
+- 80-100%: Exam Ready
 - 60-79%: Making Progress
 - 40-59%: Needs Work
 - 0-39%: Not Ready
@@ -301,7 +301,7 @@ window.addEventListener('DOMContentLoaded', function() {
 
         if (blocksPreview) {
             const labels = Array.from(document.querySelectorAll('input[name="blocks"]:checked')).map(input => input.value);
-            blocksPreview.textContent = labels.length ? labels.join(' · ') : 'Choose at least one';
+            blocksPreview.textContent = labels.length ? labels.join(' / ') : 'Choose at least one';
         }
     };
 
@@ -326,9 +326,78 @@ function openCompleteModal(sessionId, plannedMinutes, title) {
     if (!modal || !form || !heading || !minutesInput) return;
 
     form.action = `/sessions/${sessionId}/complete`;
-    heading.textContent = `${title} · planned ${plannedMinutes} minutes`;
+    heading.textContent = `${title} planned ${plannedMinutes} min`;
     minutesInput.value = plannedMinutes;
     if (notesInput) notesInput.value = '';
     modal.classList.remove('hidden');
     modal.style.display = 'flex';
+}
+
+
+async function postSessionAction(url, formData) {
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        body: formData
+    });
+    if (!response.ok) throw new Error('Request failed');
+    return response.json();
+}
+
+function applyDashboardMetrics(data) {
+    const progress = document.getElementById('metric_progress');
+    const streak = document.getElementById('metric_streak');
+    const minutes = document.getElementById('metric_minutes');
+    if (progress) progress.textContent = `${data.progress_percentage}%`;
+    if (streak) streak.textContent = `${data.streak} days`;
+    if (minutes) minutes.textContent = `${data.today_minutes} min`;
+}
+
+async function completeSessionInline(sessionId, plannedMinutes, title) {
+    const card = document.querySelector(`[data-session-id="${sessionId}"]`);
+    if (!card) return openCompleteModal(sessionId, plannedMinutes, title);
+
+    const formData = new FormData();
+    formData.append('actual_minutes', plannedMinutes);
+    formData.append('notes', 'Completed from timeline');
+    card.classList.add('is-completing');
+
+    try {
+        const data = await postSessionAction(`/sessions/${sessionId}/complete`, formData);
+        const pill = card.querySelector('.js-status-pill');
+        if (pill) {
+            pill.textContent = 'Done';
+            pill.className = 'status-pill status-completed js-status-pill';
+        }
+        const actions = card.querySelector('.session-actions');
+        if (actions) actions.remove();
+        card.classList.remove('is-completing');
+        card.classList.add('is-done');
+        applyDashboardMetrics(data);
+    } catch (error) {
+        card.classList.remove('is-completing');
+        openCompleteModal(sessionId, plannedMinutes, title);
+    }
+}
+
+async function skipSessionInline(sessionId) {
+    const card = document.querySelector(`[data-session-id="${sessionId}"]`);
+    if (!card) return;
+    const formData = new FormData();
+    card.classList.add('is-completing');
+    try {
+        const data = await postSessionAction(`/sessions/${sessionId}/skip`, formData);
+        const pill = card.querySelector('.js-status-pill');
+        if (pill) {
+            pill.textContent = 'Skipped';
+            pill.className = 'status-pill status-skipped js-status-pill';
+        }
+        const actions = card.querySelector('.session-actions');
+        if (actions) actions.remove();
+        card.classList.remove('is-completing');
+        applyDashboardMetrics(data);
+    } catch (error) {
+        card.classList.remove('is-completing');
+        location.reload();
+    }
 }
